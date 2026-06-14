@@ -71,3 +71,10 @@ create index idx_parts_book on parts(book_id);
 create index idx_questions_part on questions(part_id);
 create index idx_attempts_student on attempts(student_id);
 create index idx_answers_attempt on answers(attempt_id);
+
+-- Доступ ролей Supabase к таблицам (чтобы серверный ключ мог читать/писать).
+-- На облачном Supabase это обычно настроено по умолчанию, но явные гранты
+-- гарантируют работу на любом окружении (включая локальный запуск).
+grant usage on schema public to anon, authenticated, service_role;
+grant all on all tables in schema public to anon, authenticated, service_role;
+grant all on all sequences in schema public to anon, authenticated, service_role;
