@@ -1,13 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { verifySession } from "@/lib/auth/session";
+import { verifySessionEdge } from "@/lib/auth/edgeSession";
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (pathname.startsWith("/teacher/login")) return NextResponse.next();
 
   const token = req.cookies.get("teacher_session")?.value;
   const secret = process.env.TEACHER_PASSWORD ?? "";
-  if (!token || verifySession(token, secret) !== "teacher") {
+  if (!token || (await verifySessionEdge(token, secret)) !== "teacher") {
     const url = req.nextUrl.clone();
     url.pathname = "/teacher/login";
     return NextResponse.redirect(url);
