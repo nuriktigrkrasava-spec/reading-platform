@@ -15,15 +15,15 @@ export default function TelegramGate({ children }: { children: React.ReactNode }
     const wa = window.Telegram?.WebApp;
     wa?.ready();
 
-    const initData = wa?.initData;
-    if (!initData) {
-      // Opened outside Telegram (or no init data) — show guidance,
-      // but still render children so a pre-existing cookie session works.
-      setState("no-telegram");
-      return;
-    }
-
     (async () => {
+      const initData = wa?.initData;
+      if (!initData) {
+        // Opened outside Telegram (or no init data) — show guidance,
+        // but still render children so a pre-existing cookie session works.
+        if (!cancelled) setState("no-telegram");
+        return;
+      }
+
       try {
         const res = await fetch("/api/student/auth", {
           method: "POST",
