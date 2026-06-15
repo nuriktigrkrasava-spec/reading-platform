@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getStudentId } from "@/lib/auth/student";
 import { partDetail } from "@/lib/db/studentRepo";
+import { optionLetter } from "@/lib/options";
 import type { Answer, Question } from "@/lib/types";
 import LoadingScreen from "@/components/student/LoadingScreen";
 import PartTest from "@/components/student/PartTest";
@@ -21,7 +22,9 @@ function ChoiceResult({ q, a }: { q: Question; a: Answer | undefined }) {
       <div className={styles.answerLine}>
         <span className={styles.answerLabel}>Ваш ответ</span>
         <span className={styles.answerValue}>
-          {selected !== null ? q.options[selected] ?? "—" : "—"}
+          {selected !== null
+            ? `${optionLetter(selected)}. ${q.options[selected] ?? "—"}`
+            : "—"}
         </span>
       </div>
       <span
@@ -31,7 +34,7 @@ function ChoiceResult({ q, a }: { q: Question; a: Answer | undefined }) {
       </span>
       {!isCorrect && correct !== null ? (
         <span className={styles.correctNote}>
-          Правильный ответ: {q.options[correct] ?? "—"}
+          Правильный ответ: {optionLetter(correct)}. {q.options[correct] ?? "—"}
         </span>
       ) : null}
     </div>

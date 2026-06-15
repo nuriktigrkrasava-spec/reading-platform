@@ -10,6 +10,7 @@ export interface Student {
   id: string;
   telegramId: string;
   name: string;
+  grade: number | null; // выбранный класс (1–4), null — ещё не выбрал
 }
 
 export interface Book {
@@ -17,6 +18,7 @@ export interface Book {
   title: string;
   description: string;
   coverUrl: string | null;
+  grade: number; // класс, к которому относится книга (1–4)
 }
 
 export interface Part {

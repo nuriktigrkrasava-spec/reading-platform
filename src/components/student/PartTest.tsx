@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { submitPartAction } from "@/app/app/actions";
+import { optionLetter } from "@/lib/options";
 import type { Question } from "@/lib/types";
 import styles from "@/app/app/app.module.css";
 
@@ -106,6 +107,7 @@ export default function PartTest({
                       <span className={styles.radio}>
                         <span className={styles.radioDot} />
                       </span>
+                      <span className={styles.optionLetter}>{optionLetter(idx)}</span>
                       <span className={styles.optionText}>{opt}</span>
                     </label>
                   );

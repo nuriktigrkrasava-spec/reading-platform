@@ -6,6 +6,7 @@ import { deleteQuestionAction } from "@/app/teacher/actions";
 import PageHeader from "@/components/teacher/PageHeader";
 import SubmitButton from "@/components/teacher/SubmitButton";
 import QuestionBuilder from "@/components/teacher/QuestionBuilder";
+import { optionLetter } from "@/lib/options";
 import styles from "./part.module.css";
 
 export const dynamic = "force-dynamic";
@@ -117,6 +118,7 @@ export default async function PartBuilderPage({
                               </svg>
                             )}
                           </span>
+                          <strong style={{ marginRight: 6 }}>{optionLetter(i)}.</strong>
                           {opt}
                           {correct && (
                             <span style={{ marginLeft: "auto", fontSize: 12 }}>

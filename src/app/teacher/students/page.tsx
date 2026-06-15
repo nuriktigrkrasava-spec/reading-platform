@@ -1,8 +1,9 @@
-import { listStudents, listEnrolledBookIds } from "@/lib/db/students";
+import { listStudents } from "@/lib/db/students";
 import { listBooks } from "@/lib/db/books";
-import { enrollAction, unenrollAction } from "@/app/teacher/actions";
+import { setStudentGradeAction } from "@/app/teacher/actions";
 import PageHeader from "@/components/teacher/PageHeader";
 import SubmitButton from "@/components/teacher/SubmitButton";
+import { GRADES, gradeLabel } from "@/lib/options";
 import styles from "./students.module.css";
 
 export const dynamic = "force-dynamic";
@@ -16,17 +17,15 @@ function initials(name: string): string {
 
 export default async function StudentsPage() {
   const [students, books] = await Promise.all([listStudents(), listBooks()]);
-  const enrolledByStudent = await Promise.all(
-    students.map((s) => listEnrolledBookIds(s.id)),
-  );
-  const bookById = new Map(books.map((b) => [b.id, b]));
+  const booksByGrade = new Map<number, number>();
+  for (const b of books) booksByGrade.set(b.grade, (booksByGrade.get(b.grade) ?? 0) + 1);
 
   return (
     <>
       <PageHeader
         eyebrow="Сообщество"
         title="Ученики"
-        description="Список учеников платформы. Записывайте их на книги и управляйте доступом к материалам."
+        description="Ученики сами выбирают класс в приложении и сразу получают его книги. Здесь можно поправить класс вручную."
       />
 
       {students.length === 0 ? (
@@ -35,17 +34,14 @@ export default async function StudentsPage() {
         </div>
       ) : (
         <div className={styles.grid}>
-          {students.map((student, idx) => {
-            const enrolledIds = enrolledByStudent[idx];
-            const enrolledSet = new Set(enrolledIds);
-            const available = books.filter((b) => !enrolledSet.has(b.id));
-
+          {students.map((student) => {
+            const booksCount = student.grade != null
+              ? booksByGrade.get(student.grade) ?? 0
+              : 0;
             return (
               <article key={student.id} className={styles.card}>
                 <div className={styles.head}>
-                  <span className={styles.avatar}>
-                    {initials(student.name)}
-                  </span>
+                  <span className={styles.avatar}>{initials(student.name)}</span>
                   <div>
                     <h2 className={styles.name}>{student.name}</h2>
                     <div className={styles.tg}>
@@ -66,67 +62,41 @@ export default async function StudentsPage() {
                 </div>
 
                 <div className={styles.block}>
-                  <p className={styles.blockTitle}>Записан на книги</p>
-                  {enrolledIds.length === 0 ? (
-                    <p className={styles.emptyEnrolled}>Пока ни на одну книгу.</p>
+                  <p className={styles.blockTitle}>Класс</p>
+                  {student.grade != null ? (
+                    <p className={styles.emptyEnrolled}>
+                      {gradeLabel(student.grade)} · доступно книг: {booksCount}
+                    </p>
                   ) : (
-                    <div className={styles.enrolled}>
-                      {enrolledIds.map((bookId) => {
-                        const book = bookById.get(bookId);
-                        return (
-                          <div key={bookId} className={styles.enrolledItem}>
-                            <span className={styles.enrolledTitle}>
-                              {book?.title ?? "Книга удалена"}
-                            </span>
-                            <form action={unenrollAction}>
-                              <input
-                                type="hidden"
-                                name="studentId"
-                                value={student.id}
-                              />
-                              <input type="hidden" name="bookId" value={bookId} />
-                              <button
-                                type="submit"
-                                className={styles.unenrollBtn}
-                              >
-                                Отписать
-                              </button>
-                            </form>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    <p className={styles.emptyEnrolled}>
+                      Ученик ещё не выбрал класс в приложении.
+                    </p>
                   )}
                 </div>
 
                 <div className={styles.block}>
-                  <p className={styles.blockTitle}>Записать на книгу</p>
-                  {available.length === 0 ? (
-                    <p className={styles.emptyEnrolled}>
-                      Доступных книг для записи нет.
-                    </p>
-                  ) : (
-                    <form action={enrollAction} className={styles.enrollForm}>
-                      <input
-                        type="hidden"
-                        name="studentId"
-                        value={student.id}
-                      />
-                      <select name="bookId" required className="t-select">
-                        {available.map((b) => (
-                          <option key={b.id} value={b.id}>
-                            {b.title}
-                          </option>
-                        ))}
-                      </select>
-                      <SubmitButton
-                        className="t-btn t-btn-primary t-btn-sm"
-                        pendingText="…"
-                      >
-                        Записать
-                      </SubmitButton>
-                    </form>
-                  )}
+                  <p className={styles.blockTitle}>Изменить класс</p>
+                  <form action={setStudentGradeAction} className={styles.enrollForm}>
+                    <input type="hidden" name="studentId" value={student.id} />
+                    <select
+                      name="grade"
+                      required
+                      className="t-select"
+                      defaultValue={student.grade ?? 1}
+                    >
+                      {GRADES.map((g) => (
+                        <option key={g} value={g}>
+                          {gradeLabel(g)}
+                        </option>
+                      ))}
+                    </select>
+                    <SubmitButton
+                      className="t-btn t-btn-primary t-btn-sm"
+                      pendingText="…"
+                    >
+                      Сохранить
+                    </SubmitButton>
+                  </form>
                 </div>
               </article>
             );

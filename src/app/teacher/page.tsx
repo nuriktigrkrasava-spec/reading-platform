@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { listStudents, listEnrolledBookIds } from "@/lib/db/students";
+import { listStudents } from "@/lib/db/students";
 import { listBooks } from "@/lib/db/books";
 import { studentBookProgress } from "@/lib/db/overview";
+import { gradeLabel } from "@/lib/options";
 import PageHeader from "@/components/teacher/PageHeader";
 import styles from "./overview.module.css";
 
@@ -24,16 +25,17 @@ function partsLabel(n: number): string {
 
 export default async function OverviewPage() {
   const [students, books] = await Promise.all([listStudents(), listBooks()]);
-  const bookById = new Map(books.map((b) => [b.id, b]));
 
   const rows = await Promise.all(
     students.map(async (student) => {
-      const enrolledIds = await listEnrolledBookIds(student.id);
+      const gradeBooks = student.grade != null
+        ? books.filter((b) => b.grade === student.grade)
+        : [];
       const progress = await Promise.all(
-        enrolledIds.map(async (bookId) => ({
-          bookId,
-          title: bookById.get(bookId)?.title ?? "Книга удалена",
-          progress: await studentBookProgress(student.id, bookId),
+        gradeBooks.map(async (book) => ({
+          bookId: book.id,
+          title: book.title,
+          progress: await studentBookProgress(student.id, book.id),
         })),
       );
       return { student, progress };
@@ -61,7 +63,7 @@ export default async function OverviewPage() {
         </div>
         <div className={styles.stat}>
           <div className={styles.statValue}>{activeEnrollments}</div>
-          <div className={styles.statLabel}>Активных записей на книги</div>
+          <div className={styles.statLabel}>Книг у учеников в работе</div>
         </div>
       </div>
 
@@ -79,22 +81,18 @@ export default async function OverviewPage() {
                 <div>
                   <div className={styles.studentName}>{student.name}</div>
                   <div className={styles.studentMeta}>
-                    {progress.length === 0
-                      ? "Нет записей на книги"
-                      : `${progress.length} ${partsLabel(progress.length)} в работе`}
+                    {student.grade == null
+                      ? "Класс не выбран"
+                      : `${gradeLabel(student.grade)} · ${progress.length} ${partsLabel(progress.length)} в работе`}
                   </div>
                 </div>
               </div>
 
               {progress.length === 0 ? (
                 <p className={styles.noBooks}>
-                  Ученик ещё не записан ни на одну книгу.{" "}
-                  <Link
-                    href="/teacher/students"
-                    style={{ color: "var(--clay)", fontWeight: 600 }}
-                  >
-                    Записать
-                  </Link>
+                  {student.grade == null
+                    ? "Ученик ещё не выбрал класс в приложении."
+                    : `Для ${gradeLabel(student.grade).toLowerCase()} пока нет книг.`}
                 </p>
               ) : (
                 <div className={styles.books}>

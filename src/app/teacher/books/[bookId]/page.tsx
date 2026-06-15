@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { listBooks } from "@/lib/db/books";
 import { listParts } from "@/lib/db/parts";
-import { createPartAction } from "@/app/teacher/actions";
+import { createPartAction, updateBookAction } from "@/app/teacher/actions";
 import PageHeader from "@/components/teacher/PageHeader";
 import SubmitButton from "@/components/teacher/SubmitButton";
 import PartItem from "@/components/teacher/PartItem";
+import { GRADES, gradeLabel } from "@/lib/options";
 import styles from "./book.module.css";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +58,44 @@ export default async function BookPage({
         </div>
 
         <aside className={styles.aside}>
+          <div className={styles.formCard}>
+            <h2 className={styles.formTitle}>Класс книги</h2>
+            <p className={styles.formHint}>
+              Книгу видят ученики, выбравшие этот класс.
+            </p>
+            <form action={updateBookAction} className={styles.form}>
+              <input type="hidden" name="bookId" value={book.id} />
+              <input type="hidden" name="title" value={book.title} />
+              <input type="hidden" name="description" value={book.description} />
+              <div>
+                <label htmlFor="grade" className="t-label">
+                  Для какого класса
+                </label>
+                <select
+                  id="grade"
+                  name="grade"
+                  required
+                  className="t-select"
+                  defaultValue={book.grade}
+                >
+                  {GRADES.map((g) => (
+                    <option key={g} value={g}>
+                      {gradeLabel(g)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <SubmitButton
+                  className="t-btn t-btn-primary t-btn-sm"
+                  pendingText="Сохраняем…"
+                >
+                  Сохранить класс
+                </SubmitButton>
+              </div>
+            </form>
+          </div>
+
           <div className={styles.formCard}>
             <h2 className={styles.formTitle}>Новая часть</h2>
             <p className={styles.formHint}>

@@ -21,13 +21,16 @@ export async function upsertStudentByTelegram(input: {
 
 export interface EnrolledBook { book: Book; progress: BookProgress; }
 
-export async function enrolledBooksWithProgress(studentId: string): Promise<EnrolledBook[]> {
+// Книги класса ученика + его прогресс по каждой. Доступ определяется
+// выбранным классом (grade), а не ручной записью учителя.
+export async function booksForGradeWithProgress(
+  studentId: string, grade: number,
+): Promise<EnrolledBook[]> {
   const db = createServerSupabase();
-  const { data, error } = await db.from("enrollments")
-    .select("books!inner(*)").eq("student_id", studentId);
+  const { data, error } = await db.from("books")
+    .select("*").eq("grade", grade).order("created_at");
   if (error) throw error;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const books: Book[] = (data ?? []).map((r: any) => bookFromRow(r.books));
+  const books: Book[] = (data ?? []).map(bookFromRow);
   const result: EnrolledBook[] = [];
   for (const book of books) {
     result.push({ book, progress: await studentBookProgress(studentId, book.id) });

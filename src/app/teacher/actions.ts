@@ -24,13 +24,31 @@ export async function logoutAction() {
   redirect("/teacher/login");
 }
 
+function parseGrade(value: FormDataEntryValue | null, fallback = 1): number {
+  const n = Number(value ?? fallback);
+  return Number.isInteger(n) && n >= 1 && n <= 4 ? n : fallback;
+}
+
 export async function createBookAction(formData: FormData) {
   await requireAuth();
   await books.createBook({
     title: String(formData.get("title") ?? ""),
     description: String(formData.get("description") ?? ""),
+    grade: parseGrade(formData.get("grade")),
   });
   revalidatePath("/teacher/books");
+}
+
+export async function updateBookAction(formData: FormData) {
+  await requireAuth();
+  const bookId = String(formData.get("bookId"));
+  await books.updateBook(bookId, {
+    title: String(formData.get("title") ?? ""),
+    description: String(formData.get("description") ?? ""),
+    grade: parseGrade(formData.get("grade")),
+  });
+  revalidatePath("/teacher/books");
+  revalidatePath(`/teacher/books/${bookId}`);
 }
 
 export async function deleteBookAction(formData: FormData) {
@@ -73,11 +91,21 @@ export async function createQuestionAction(formData: FormData) {
   const type = String(formData.get("type")) as "choice" | "open";
   const partId = String(formData.get("partId"));
   const bookId = String(formData.get("bookId"));
-  const optionsRaw = String(formData.get("options") ?? "");
+
+  // Варианты приходят отдельными полями "option" в порядке отображения.
   const options = type === "choice"
-    ? optionsRaw.split("\n").map((s) => s.trim()).filter(Boolean) : [];
-  const correctOptionIndex = type === "choice"
-    ? Number(formData.get("correctOptionIndex") ?? 0) : null;
+    ? formData.getAll("option").map((s) => String(s).trim()).filter(Boolean)
+    : [];
+
+  // Правильный — это выбранный радио-кнопкой индекс (отсчёт с 0 — внутренний,
+  // учитель его не видит, а просто кликает «верный»). Подстраховка: clamp.
+  let correctOptionIndex: number | null = null;
+  if (type === "choice") {
+    const raw = Number(formData.get("correctOptionIndex") ?? 0);
+    correctOptionIndex =
+      Number.isInteger(raw) && raw >= 0 && raw < options.length ? raw : 0;
+  }
+
   await questions.createQuestion({
     partId, type,
     text: String(formData.get("text") ?? ""),
@@ -95,16 +123,14 @@ export async function deleteQuestionAction(formData: FormData) {
   revalidatePath(`/teacher/books/${bookId}/parts/${partId}`);
 }
 
-export async function enrollAction(formData: FormData) {
+export async function setStudentGradeAction(formData: FormData) {
   await requireAuth();
-  await students.enroll(String(formData.get("studentId")), String(formData.get("bookId")));
+  await students.setStudentGrade(
+    String(formData.get("studentId")),
+    parseGrade(formData.get("grade")),
+  );
   revalidatePath("/teacher/students");
-}
-
-export async function unenrollAction(formData: FormData) {
-  await requireAuth();
-  await students.unenroll(String(formData.get("studentId")), String(formData.get("bookId")));
-  revalidatePath("/teacher/students");
+  revalidatePath("/teacher");
 }
 
 export async function gradeAction(formData: FormData) {

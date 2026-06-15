@@ -13,18 +13,20 @@ export async function submitPart(
 ): Promise<void> {
   const db = createServerSupabase();
 
-  // 1. Найти part, чтобы узнать book_id. Нет такого part — no-op.
+  // 1. Найти part и класс его книги. Нет такого part — no-op.
   const { data: partRow, error: perr } = await db.from("parts")
-    .select("book_id").eq("id", partId).maybeSingle();
+    .select("book_id, books!inner(grade)").eq("id", partId).maybeSingle();
   if (perr) throw perr;
   if (!partRow) return;
   const bookId = partRow.book_id as string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const bookGrade = (partRow as any).books?.grade as number | undefined;
 
-  // 2. Студент должен быть записан на книгу. Нет записи — no-op.
-  const { data: enrollment, error: eerr } = await db.from("enrollments")
-    .select("student_id").eq("student_id", studentId).eq("book_id", bookId).maybeSingle();
-  if (eerr) throw eerr;
-  if (!enrollment) return;
+  // 2. Класс ученика должен совпадать с классом книги. Иначе — no-op.
+  const { data: studentRow, error: serr } = await db.from("students")
+    .select("grade").eq("id", studentId).maybeSingle();
+  if (serr) throw serr;
+  if (!studentRow || studentRow.grade == null || studentRow.grade !== bookGrade) return;
 
   // 3. Part должна быть разблокирована для этого студента. Иначе — no-op.
   const statuses = await partsWithStatus(studentId, bookId);

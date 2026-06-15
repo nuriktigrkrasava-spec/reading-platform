@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { createQuestionAction } from "@/app/teacher/actions";
 import SubmitButton from "@/components/teacher/SubmitButton";
+import { optionLetter } from "@/lib/options";
 import styles from "./QuestionBuilder.module.css";
+
+const MAX_OPTIONS = 8;
+const MIN_OPTIONS = 2;
 
 export default function QuestionBuilder({
   bookId,
@@ -13,6 +17,28 @@ export default function QuestionBuilder({
   partId: string;
 }) {
   const [type, setType] = useState<"choice" | "open">("choice");
+  const [options, setOptions] = useState<string[]>(["", ""]);
+  const [correctIndex, setCorrectIndex] = useState(0);
+
+  function setOption(i: number, value: string) {
+    setOptions((opts) => opts.map((o, idx) => (idx === i ? value : o)));
+  }
+
+  function addOption() {
+    setOptions((opts) => (opts.length >= MAX_OPTIONS ? opts : [...opts, ""]));
+  }
+
+  function removeOption(i: number) {
+    setOptions((opts) => {
+      if (opts.length <= MIN_OPTIONS) return opts;
+      return opts.filter((_, idx) => idx !== i);
+    });
+    setCorrectIndex((c) => {
+      if (i === c) return 0; // удалили правильный — сбрасываем на первый
+      if (i < c) return c - 1; // сдвиг индексов выше удалённого
+      return c;
+    });
+  }
 
   return (
     <div className={styles.card}>
@@ -78,55 +104,87 @@ export default function QuestionBuilder({
 
         {type === "choice" && (
           <div className={styles.optionsBlock}>
-            <label htmlFor="options" className="t-label">
-              Варианты ответа
-            </label>
-            <textarea
-              id="options"
-              name="options"
-              rows={4}
-              className="t-textarea"
-              placeholder={"Каждый вариант — с новой строки\nВариант 1\nВариант 2\nВариант 3"}
-            />
+            <span className="t-label">Варианты ответа</span>
             <p className={styles.optionsHint}>
-              По одному варианту в строке. Нумерация для правильного ответа
-              начинается с 0 (первый вариант — 0).
+              Впишите варианты и нажмите кружок «верный» у правильного.
             </p>
+
+            <div className={styles.optionList}>
+              {options.map((opt, i) => {
+                const isCorrect = correctIndex === i;
+                return (
+                  <div
+                    key={i}
+                    className={`${styles.optionRow} ${
+                      isCorrect ? styles.optionRowCorrect : ""
+                    }`}
+                  >
+                    <span className={styles.optionBadge}>{optionLetter(i)}</span>
+                    <input
+                      type="text"
+                      name="option"
+                      required
+                      className={styles.optionInput}
+                      placeholder={`Вариант ${optionLetter(i)}`}
+                      value={opt}
+                      onChange={(e) => setOption(i, e.target.value)}
+                    />
+                    <label
+                      className={`${styles.correctToggle} ${
+                        isCorrect ? styles.correctToggleOn : ""
+                      }`}
+                      title="Отметить как правильный"
+                    >
+                      <input
+                        type="radio"
+                        name="correctOptionIndex"
+                        value={i}
+                        checked={isCorrect}
+                        onChange={() => setCorrectIndex(i)}
+                      />
+                      <span className={styles.correctDot} />
+                      верный
+                    </label>
+                    {options.length > MIN_OPTIONS && (
+                      <button
+                        type="button"
+                        className={styles.removeOption}
+                        onClick={() => removeOption(i)}
+                        aria-label="Удалить вариант"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {options.length < MAX_OPTIONS && (
+              <button
+                type="button"
+                className={styles.addOption}
+                onClick={addOption}
+              >
+                + Добавить вариант
+              </button>
+            )}
           </div>
         )}
 
-        <div className={styles.row}>
-          {type === "choice" ? (
-            <div>
-              <label htmlFor="correctOptionIndex" className="t-label">
-                Правильный (№)
-              </label>
-              <input
-                id="correctOptionIndex"
-                name="correctOptionIndex"
-                type="number"
-                min={0}
-                defaultValue={0}
-                className="t-input"
-              />
-            </div>
-          ) : (
-            <div />
-          )}
-          <div>
-            <label htmlFor="points" className="t-label">
-              Баллы
-            </label>
-            <input
-              id="points"
-              name="points"
-              type="number"
-              min={1}
-              defaultValue={1}
-              required
-              className="t-input"
-            />
-          </div>
+        <div>
+          <label htmlFor="points" className="t-label">
+            Баллы за вопрос
+          </label>
+          <input
+            id="points"
+            name="points"
+            type="number"
+            min={1}
+            defaultValue={1}
+            required
+            className="t-input"
+          />
         </div>
 
         <div>

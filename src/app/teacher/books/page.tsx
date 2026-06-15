@@ -3,6 +3,7 @@ import { listBooks } from "@/lib/db/books";
 import { createBookAction, deleteBookAction } from "@/app/teacher/actions";
 import PageHeader from "@/components/teacher/PageHeader";
 import SubmitButton from "@/components/teacher/SubmitButton";
+import { GRADES, gradeLabel } from "@/lib/options";
 import styles from "./books.module.css";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +53,9 @@ export default async function BooksPage() {
                   >
                     {book.title}
                   </Link>
+                  <span className="t-chip t-chip-clay" style={{ marginTop: 6 }}>
+                    {gradeLabel(book.grade)}
+                  </span>
                   {book.description && (
                     <p className={styles.bookDesc}>{book.description}</p>
                   )}
@@ -110,6 +114,18 @@ export default async function BooksPage() {
                   className="t-input"
                   placeholder="Например, «Капитанская дочка»"
                 />
+              </div>
+              <div>
+                <label htmlFor="grade" className="t-label">
+                  Класс
+                </label>
+                <select id="grade" name="grade" required className="t-select" defaultValue={1}>
+                  {GRADES.map((g) => (
+                    <option key={g} value={g}>
+                      {gradeLabel(g)}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label htmlFor="description" className="t-label">

@@ -9,24 +9,15 @@ export async function listStudents(): Promise<Student[]> {
   return (data ?? []).map(studentFromRow);
 }
 
-export async function listEnrolledBookIds(studentId: string): Promise<string[]> {
+export async function getStudent(studentId: string): Promise<Student | null> {
   const db = createServerSupabase();
-  const { data, error } = await db.from("enrollments")
-    .select("book_id").eq("student_id", studentId);
+  const { data, error } = await db.from("students").select("*").eq("id", studentId).maybeSingle();
   if (error) throw error;
-  return (data ?? []).map((r) => r.book_id as string);
+  return data ? studentFromRow(data) : null;
 }
 
-export async function enroll(studentId: string, bookId: string): Promise<void> {
+export async function setStudentGrade(studentId: string, grade: number): Promise<void> {
   const db = createServerSupabase();
-  const { error } = await db.from("enrollments")
-    .upsert({ student_id: studentId, book_id: bookId }, { onConflict: "student_id,book_id" });
-  if (error) throw error;
-}
-
-export async function unenroll(studentId: string, bookId: string): Promise<void> {
-  const db = createServerSupabase();
-  const { error } = await db.from("enrollments").delete()
-    .eq("student_id", studentId).eq("book_id", bookId);
+  const { error } = await db.from("students").update({ grade }).eq("id", studentId);
   if (error) throw error;
 }
