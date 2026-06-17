@@ -22,8 +22,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Кабинет преподавателя",
-  description: "Панель управления платформой чтения",
+  title: "Мұғалім кабинеті",
+  description: "Оқу сауаттылығы платформасын басқару панелі",
 };
 
 export default function RootLayout({
@@ -33,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="ru"
+      lang="kk"
       className={`${fraunces.variable} ${manrope.variable} ${jetbrainsMono.variable}`}
     >
       <body>{children}</body>

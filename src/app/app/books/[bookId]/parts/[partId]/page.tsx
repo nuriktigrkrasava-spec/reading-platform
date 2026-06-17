@@ -20,7 +20,7 @@ function ChoiceResult({ q, a }: { q: Question; a: Answer | undefined }) {
         <span className={styles.qText}>{q.text}</span>
       </div>
       <div className={styles.answerLine}>
-        <span className={styles.answerLabel}>Ваш ответ</span>
+        <span className={styles.answerLabel}>Сіздің жауабыңыз</span>
         <span className={styles.answerValue}>
           {selected !== null
             ? `${optionLetter(selected)}. ${q.options[selected] ?? "—"}`
@@ -30,11 +30,11 @@ function ChoiceResult({ q, a }: { q: Question; a: Answer | undefined }) {
       <span
         className={`${styles.verdict} ${isCorrect ? styles.verdictOk : styles.verdictNo}`}
       >
-        {isCorrect ? "Верно" : "Неверно"}
+        {isCorrect ? "Дұрыс" : "Қате"}
       </span>
       {!isCorrect && correct !== null ? (
         <span className={styles.correctNote}>
-          Правильный ответ: {optionLetter(correct)}. {q.options[correct] ?? "—"}
+          Дұрыс жауап: {optionLetter(correct)}. {q.options[correct] ?? "—"}
         </span>
       ) : null}
     </div>
@@ -49,13 +49,13 @@ function OpenResult({ q, a }: { q: Question; a: Answer | undefined }) {
         <span className={styles.qText}>{q.text}</span>
       </div>
       <div className={styles.answerLine}>
-        <span className={styles.answerLabel}>Ваш ответ</span>
+        <span className={styles.answerLabel}>Сіздің жауабыңыз</span>
         <span className={styles.answerValue}>{a?.textAnswer || "—"}</span>
       </div>
       {graded ? (
         <>
           <span className={styles.points}>
-            {a?.awardedPoints ?? 0} из {q.points} б.
+            {q.points} ұпайдан {a?.awardedPoints ?? 0}
           </span>
           {a?.teacherComment ? (
             <div className={styles.comment}>{a.teacherComment}</div>
@@ -63,7 +63,7 @@ function OpenResult({ q, a }: { q: Question; a: Answer | undefined }) {
         </>
       ) : (
         <span className={`${styles.verdict} ${styles.verdictNo}`}>
-          На проверке у учителя
+          Мұғалім тексеруінде
         </span>
       )}
     </div>
@@ -84,7 +84,7 @@ export default async function PartPage({
   const backLink = (
     <Link href={`/app/books/${bookId}`} className={styles.back}>
       <ChevronLeft />
-      К частям книги
+      Кітап бөлімдеріне
     </Link>
   );
 
@@ -92,7 +92,7 @@ export default async function PartPage({
     return (
       <div className={styles.shell}>
         {backLink}
-        <div className={styles.notice}>Часть не найдена</div>
+        <div className={styles.notice}>Бөлім табылмады</div>
       </div>
     );
   }
@@ -103,7 +103,7 @@ export default async function PartPage({
         {backLink}
         <div className={styles.notice}>
           <span className={styles.noticeIcon}>🔒</span>
-          Эта часть пока закрыта
+          Бұл бөлім әзірге жабық
         </div>
       </div>
     );
@@ -118,22 +118,22 @@ export default async function PartPage({
       {backLink}
 
       <header className={styles.header}>
-        <span className={styles.eyebrow}>Часть {part.order}</span>
+        <span className={styles.eyebrow}>{part.order}-бөлім</span>
         <h1 className={styles.title}>{part.title}</h1>
       </header>
 
-      <span className={styles.sectionLabel}>Текст</span>
+      <span className={styles.sectionLabel}>Мәтін</span>
       <div className={styles.reading}>{part.readingText}</div>
 
       {showTest ? (
         <>
-          <span className={styles.sectionLabel}>Вопросы</span>
+          <span className={styles.sectionLabel}>Сұрақтар</span>
           <PartTest bookId={bookId} partId={partId} questions={questions} />
         </>
       ) : (
         <>
           <span className={styles.sectionLabel}>
-            {status === "pending_review" ? "Ваши ответы · на проверке" : "Результат"}
+            {status === "pending_review" ? "Сіздің жауаптарыңыз · тексеруде" : "Нәтиже"}
           </span>
           <div className={styles.partList}>
             {questions.map((q) =>

@@ -12,20 +12,20 @@ export default async function GradingPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Очередь проверки"
-        title="Проверка"
-        description="Открытые ответы учеников, ожидающие вашей оценки. Выставьте баллы и при желании оставьте комментарий."
+        eyebrow="Тексеру кезегі"
+        title="Тексеру"
+        description="Бағалауыңызды күтіп тұрған оқушылардың ашық жауаптары. Ұпай қойып, қаласаңыз пікір қалдырыңыз."
         action={
           pending.length > 0 ? (
             <span className="t-chip t-chip-clay">
-              {pending.length} на проверке
+              {pending.length} тексеруде
             </span>
           ) : undefined
         }
       />
 
       {pending.length === 0 ? (
-        <div className="t-empty">Нет ответов на проверке</div>
+        <div className="t-empty">Тексеруге жауап жоқ</div>
       ) : (
         <div className={styles.list}>
           {pending.map((item) => (
@@ -40,15 +40,15 @@ export default async function GradingPage() {
 
               <div className={styles.body}>
                 <div>
-                  <p className={styles.question}>Вопрос</p>
+                  <p className={styles.question}>Сұрақ</p>
                   <p className={styles.qText}>{item.questionText}</p>
 
-                  <p className={styles.answerLabel}>Ответ ученика</p>
+                  <p className={styles.answerLabel}>Оқушының жауабы</p>
                   {item.textAnswer ? (
                     <p className={styles.answer}>{item.textAnswer}</p>
                   ) : (
                     <p className={`${styles.answer} ${styles.answerEmpty}`}>
-                      Ученик не оставил текста.
+                      Оқушы мәтін қалдырмады.
                     </p>
                   )}
                 </div>
@@ -60,7 +60,7 @@ export default async function GradingPage() {
                       className="t-label"
                       htmlFor={`points-${item.answerId}`}
                     >
-                      Баллы
+                      Ұпай
                     </label>
                     <input
                       id={`points-${item.answerId}`}
@@ -73,7 +73,7 @@ export default async function GradingPage() {
                       className="t-input"
                     />
                     <p className={styles.maxHint}>
-                      Максимум: {item.maxPoints}
+                      Ең көбі: {item.maxPoints}
                     </p>
                   </div>
                   <div>
@@ -81,21 +81,21 @@ export default async function GradingPage() {
                       className="t-label"
                       htmlFor={`comment-${item.answerId}`}
                     >
-                      Комментарий
+                      Пікір
                     </label>
                     <textarea
                       id={`comment-${item.answerId}`}
                       name="comment"
                       rows={3}
                       className="t-textarea"
-                      placeholder="Необязательно — пояснение к оценке"
+                      placeholder="Міндетті емес — бағаға түсініктеме"
                     />
                   </div>
                   <SubmitButton
                     className="t-btn t-btn-primary"
-                    pendingText="Сохраняем…"
+                    pendingText="Сақталуда…"
                   >
-                    Оценить ответ
+                    Жауапты бағалау
                   </SubmitButton>
                 </form>
               </div>

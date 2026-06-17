@@ -47,11 +47,11 @@ export default function PartTest({
     for (const q of questions) {
       const draft = drafts[q.id];
       if (q.type === "choice" && draft.selectedOptionIndex === null) {
-        setError("Ответьте на все вопросы, чтобы отправить");
+        setError("Жіберу үшін барлық сұраққа жауап беріңіз");
         return;
       }
       if (q.type === "open" && draft.textAnswer.trim() === "") {
-        setError("Ответьте на все вопросы, чтобы отправить");
+        setError("Жіберу үшін барлық сұраққа жауап беріңіз");
         return;
       }
     }
@@ -70,7 +70,7 @@ export default function PartTest({
       if (res.ok) {
         router.refresh();
       } else {
-        setError("Не удалось отправить. Попробуйте ещё раз");
+        setError("Жіберу мүмкін болмады. Қайта көріңіз");
       }
     });
   }
@@ -85,7 +85,7 @@ export default function PartTest({
               <span className={styles.qNum}>{i + 1}.</span>
               <span className={styles.qText}>
                 {q.text}
-                <span className={styles.qPoints}> · {q.points} б.</span>
+                <span className={styles.qPoints}> · {q.points} ұпай</span>
               </span>
             </div>
 
@@ -116,7 +116,7 @@ export default function PartTest({
             ) : (
               <textarea
                 className={styles.textarea}
-                placeholder="Ваш ответ…"
+                placeholder="Сіздің жауабыңыз…"
                 value={draft.textAnswer}
                 onChange={(e) => setText(q.id, e.target.value)}
               />
@@ -129,7 +129,7 @@ export default function PartTest({
 
       <div className={styles.submitBar}>
         <button type="submit" className={styles.submit} disabled={pending}>
-          {pending ? "Отправка…" : "Отправить"}
+          {pending ? "Жіберілуде…" : "Жіберу"}
         </button>
       </div>
     </form>

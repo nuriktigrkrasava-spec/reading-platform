@@ -12,5 +12,5 @@ export const GRADES = [1, 2, 3, 4] as const;
 export type Grade = (typeof GRADES)[number];
 
 export function gradeLabel(grade: number): string {
-  return `${grade} класс`;
+  return `${grade}-сынып`;
 }

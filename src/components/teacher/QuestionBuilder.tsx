@@ -42,10 +42,10 @@ export default function QuestionBuilder({
 
   return (
     <div className={styles.card}>
-      <h2 className={styles.title}>Новый вопрос</h2>
+      <h2 className={styles.title}>Жаңа сұрақ</h2>
       <p className={styles.hint}>
-        Выберите тип вопроса и заполните поля. Вопрос добавится в тест этой
-        части.
+        Сұрақ түрін таңдап, өрістерді толтырыңыз. Сұрақ осы бөлімнің тестіне
+        қосылады.
       </p>
 
       <form action={createQuestionAction} className={styles.form}>
@@ -53,7 +53,7 @@ export default function QuestionBuilder({
         <input type="hidden" name="partId" value={partId} />
 
         <div>
-          <span className="t-label">Тип вопроса</span>
+          <span className="t-label">Сұрақ түрі</span>
           <div className={styles.typeToggle}>
             <label
               className={`${styles.typeOption} ${
@@ -67,8 +67,8 @@ export default function QuestionBuilder({
                 checked={type === "choice"}
                 onChange={() => setType("choice")}
               />
-              <span className={styles.typeName}>С вариантами</span>
-              <span className={styles.typeDesc}>Один правильный ответ</span>
+              <span className={styles.typeName}>Нұсқалармен</span>
+              <span className={styles.typeDesc}>Бір дұрыс жауап</span>
             </label>
             <label
               className={`${styles.typeOption} ${
@@ -82,15 +82,15 @@ export default function QuestionBuilder({
                 checked={type === "open"}
                 onChange={() => setType("open")}
               />
-              <span className={styles.typeName}>Открытый</span>
-              <span className={styles.typeDesc}>Ответ проверяет учитель</span>
+              <span className={styles.typeName}>Ашық</span>
+              <span className={styles.typeDesc}>Жауапты мұғалім тексереді</span>
             </label>
           </div>
         </div>
 
         <div>
           <label htmlFor="qtext" className="t-label">
-            Текст вопроса
+            Сұрақ мәтіні
           </label>
           <textarea
             id="qtext"
@@ -98,15 +98,15 @@ export default function QuestionBuilder({
             required
             rows={3}
             className="t-textarea"
-            placeholder="Сформулируйте вопрос"
+            placeholder="Сұрақты тұжырымдаңыз"
           />
         </div>
 
         {type === "choice" && (
           <div className={styles.optionsBlock}>
-            <span className="t-label">Варианты ответа</span>
+            <span className="t-label">Жауап нұсқалары</span>
             <p className={styles.optionsHint}>
-              Впишите варианты и нажмите кружок «верный» у правильного.
+              Нұсқаларды жазып, дұрысының «дұрыс» дөңгелегін басыңыз.
             </p>
 
             <div className={styles.optionList}>
@@ -125,7 +125,7 @@ export default function QuestionBuilder({
                       name="option"
                       required
                       className={styles.optionInput}
-                      placeholder={`Вариант ${optionLetter(i)}`}
+                      placeholder={`${optionLetter(i)} нұсқасы`}
                       value={opt}
                       onChange={(e) => setOption(i, e.target.value)}
                     />
@@ -133,7 +133,7 @@ export default function QuestionBuilder({
                       className={`${styles.correctToggle} ${
                         isCorrect ? styles.correctToggleOn : ""
                       }`}
-                      title="Отметить как правильный"
+                      title="Дұрыс деп белгілеу"
                     >
                       <input
                         type="radio"
@@ -143,14 +143,14 @@ export default function QuestionBuilder({
                         onChange={() => setCorrectIndex(i)}
                       />
                       <span className={styles.correctDot} />
-                      верный
+                      дұрыс
                     </label>
                     {options.length > MIN_OPTIONS && (
                       <button
                         type="button"
                         className={styles.removeOption}
                         onClick={() => removeOption(i)}
-                        aria-label="Удалить вариант"
+                        aria-label="Нұсқаны жою"
                       >
                         ✕
                       </button>
@@ -166,7 +166,7 @@ export default function QuestionBuilder({
                 className={styles.addOption}
                 onClick={addOption}
               >
-                + Добавить вариант
+                + Нұсқа қосу
               </button>
             )}
           </div>
@@ -174,7 +174,7 @@ export default function QuestionBuilder({
 
         <div>
           <label htmlFor="points" className="t-label">
-            Баллы за вопрос
+            Сұрақ ұпайы
           </label>
           <input
             id="points"
@@ -188,8 +188,8 @@ export default function QuestionBuilder({
         </div>
 
         <div>
-          <SubmitButton className="t-btn t-btn-primary" pendingText="Добавляем…">
-            Добавить вопрос
+          <SubmitButton className="t-btn t-btn-primary" pendingText="Қосылуда…">
+            Сұрақ қосу
           </SubmitButton>
         </div>
       </form>

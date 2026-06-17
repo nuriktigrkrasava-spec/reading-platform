@@ -20,7 +20,7 @@ export default function ClassPicker() {
       if (res.ok) {
         router.refresh();
       } else {
-        setError("Не удалось сохранить. Попробуйте ещё раз");
+        setError("Сақтау мүмкін болмады. Қайта көріңіз");
         setPicking(null);
       }
     });
@@ -29,10 +29,10 @@ export default function ClassPicker() {
   return (
     <div className={styles.shell}>
       <header className={styles.header}>
-        <span className={styles.eyebrow}>Добро пожаловать</span>
-        <h1 className={styles.title}>В каком вы классе?</h1>
+        <span className={styles.eyebrow}>Қош келдіңіз</span>
+        <h1 className={styles.title}>Қай сыныптасыз?</h1>
         <p className={styles.subtitle}>
-          Выберите свой класс — мы покажем подходящие книги и тесты
+          Сыныбыңызды таңдаңыз — біз сізге сай кітаптар мен тестерді көрсетеміз
         </p>
       </header>
 
@@ -47,7 +47,7 @@ export default function ClassPicker() {
           >
             <span className={styles.classNum}>{grade}</span>
             <span className={styles.classWord}>
-              {picking === grade && pending ? "Сохраняем…" : "класс"}
+              {picking === grade && pending ? "Сақталуда…" : "сынып"}
             </span>
           </button>
         ))}

@@ -26,11 +26,11 @@ function PartIcon({ status, unlocked }: { status: PartWithStatus["status"]; unlo
 
 function PartTail({ status, unlocked }: { status: PartWithStatus["status"]; unlocked: boolean }) {
   if (!unlocked)
-    return <span className={`${styles.pill} ${styles.pillLocked}`}>Закрыто</span>;
+    return <span className={`${styles.pill} ${styles.pillLocked}`}>Жабық</span>;
   if (status === "completed")
-    return <span className={`${styles.pill} ${styles.pillOk}`}>Готово</span>;
+    return <span className={`${styles.pill} ${styles.pillOk}`}>Дайын</span>;
   if (status === "pending_review")
-    return <span className={`${styles.pill} ${styles.pillReview}`}>На проверке</span>;
+    return <span className={`${styles.pill} ${styles.pillReview}`}>Тексеруде</span>;
   return <span className={styles.partTail}><ChevronRight /></span>;
 }
 
@@ -49,17 +49,17 @@ export default async function BookPartsPage({
     <div className={styles.shell}>
       <Link href="/app" className={styles.back}>
         <ChevronLeft />
-        Все книги
+        Барлық кітаптар
       </Link>
 
       <header className={styles.header}>
-        <span className={styles.eyebrow}>Содержание</span>
-        <h1 className={styles.title}>Части книги</h1>
-        <p className={styles.subtitle}>Открывайте части по порядку</p>
+        <span className={styles.eyebrow}>Мазмұны</span>
+        <h1 className={styles.title}>Кітап бөлімдері</h1>
+        <p className={styles.subtitle}>Бөлімдерді ретімен ашыңыз</p>
       </header>
 
       {parts.length === 0 ? (
-        <div className={styles.notice}>В этой книге пока нет частей</div>
+        <div className={styles.notice}>Бұл кітапта әзірге бөлім жоқ</div>
       ) : (
         <div className={styles.partList}>
           {parts.map(({ part, status, unlocked }) => {
@@ -68,7 +68,7 @@ export default async function BookPartsPage({
               <>
                 <PartIcon status={status} unlocked={unlocked} />
                 <div className={styles.partBody}>
-                  <span className={styles.partOrder}>Часть {part.order}</span>
+                  <span className={styles.partOrder}>{part.order}-бөлім</span>
                   <span className={styles.partTitle}>{part.title}</span>
                 </div>
                 <PartTail status={status} unlocked={unlocked} />

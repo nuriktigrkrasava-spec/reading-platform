@@ -6,23 +6,23 @@ export default function Home() {
     <main className={styles.screen}>
       <section className={styles.card}>
         <div className={styles.brand}>
-          <span className={styles.mark}>Ч</span>
-          <span className={styles.brandName}>Читальня</span>
+          <span className={styles.mark}>О</span>
+          <span className={styles.brandName}>Оқу сауаттылығы</span>
         </div>
 
-        <span className={styles.eyebrow}>Платформа чтения</span>
-        <h1 className={styles.title}>Платформа чтения</h1>
+        <span className={styles.eyebrow}>Оқу сауаттылығы</span>
+        <h1 className={styles.title}>Оқу сауаттылығы</h1>
         <p className={styles.lead}>
-          Учебная среда для осмысленного чтения: преподаватель ведёт занятия и
-          проверяет работы, ученики читают и отвечают на задания.
+          Мағыналы оқуға арналған оқу ортасы: мұғалім сабақ жүргізіп,
+          жұмыстарды тексереді, оқушылар оқып, тапсырмаларға жауап береді.
         </p>
 
         <Link href="/teacher" className={`t-btn t-btn-primary ${styles.cta}`}>
-          Вход для учителя
+          Мұғалім кірісі
         </Link>
 
         <p className={styles.note}>
-          Ученики открывают платформу через Telegram-бота.
+          Оқушылар платформаны Telegram-бот арқылы ашады.
         </p>
       </section>
     </main>

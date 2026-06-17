@@ -23,14 +23,14 @@ export default async function StudentsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Сообщество"
-        title="Ученики"
-        description="Ученики сами выбирают класс в приложении и сразу получают его книги. Здесь можно поправить класс вручную."
+        eyebrow="Қауымдастық"
+        title="Оқушылар"
+        description="Оқушылар қолданбаға құпиясөзбен кіріп, өз аты-жөнін жазады. Мұнда олардың сыныбын өзгертуге болады."
       />
 
       {students.length === 0 ? (
         <div className="t-empty">
-          Учеников пока нет. Они появятся здесь после регистрации в боте.
+          Әзірге оқушылар жоқ. Олар қолданбаға кіргеннен кейін осында көрінеді.
         </div>
       ) : (
         <div className={styles.grid}>
@@ -62,20 +62,20 @@ export default async function StudentsPage() {
                 </div>
 
                 <div className={styles.block}>
-                  <p className={styles.blockTitle}>Класс</p>
+                  <p className={styles.blockTitle}>Сынып</p>
                   {student.grade != null ? (
                     <p className={styles.emptyEnrolled}>
-                      {gradeLabel(student.grade)} · доступно книг: {booksCount}
+                      {gradeLabel(student.grade)} · қолжетімді кітап: {booksCount}
                     </p>
                   ) : (
                     <p className={styles.emptyEnrolled}>
-                      Ученик ещё не выбрал класс в приложении.
+                      Оқушы әлі қолданбада сыныбын таңдамаған.
                     </p>
                   )}
                 </div>
 
                 <div className={styles.block}>
-                  <p className={styles.blockTitle}>Изменить класс</p>
+                  <p className={styles.blockTitle}>Сыныпты өзгерту</p>
                   <form action={setStudentGradeAction} className={styles.enrollForm}>
                     <input type="hidden" name="studentId" value={student.id} />
                     <select
@@ -94,7 +94,7 @@ export default async function StudentsPage() {
                       className="t-btn t-btn-primary t-btn-sm"
                       pendingText="…"
                     >
-                      Сохранить
+                      Сақтау
                     </SubmitButton>
                   </form>
                 </div>

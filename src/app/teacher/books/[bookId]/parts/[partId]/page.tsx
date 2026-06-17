@@ -11,14 +11,6 @@ import styles from "./part.module.css";
 
 export const dynamic = "force-dynamic";
 
-function pointsLabel(n: number): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return "балл";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return "балла";
-  return "баллов";
-}
-
 export default async function PartBuilderPage({
   params,
 }: {
@@ -34,15 +26,15 @@ export default async function PartBuilderPage({
   return (
     <>
       <PageHeader
-        eyebrow={`Часть ${part.order} · Конструктор теста`}
+        eyebrow={`${part.order}-бөлім · Тест құрастырушы`}
         title={part.title}
-        description="Соберите тест: вопросы с вариантами проверяются автоматически, открытые — вручную в разделе «Проверка»."
+        description="Тест жинаңыз: нұсқалы сұрақтар автоматты түрде, ашық сұрақтар «Тексеру» бөлімінде қолмен тексеріледі."
         back={
           <Link
             href={`/teacher/books/${bookId}`}
             className="t-btn t-btn-ghost t-btn-sm"
           >
-            ← К частям книги
+            ← Кітап бөлімдеріне
           </Link>
         }
       />
@@ -50,13 +42,13 @@ export default async function PartBuilderPage({
       <div className={styles.layout}>
         <div className={styles.questions}>
           <div className={styles.sectionHead}>
-            <span className={styles.sectionTitle}>Вопросы теста</span>
-            <span className={styles.count}>Всего: {questions.length}</span>
+            <span className={styles.sectionTitle}>Тест сұрақтары</span>
+            <span className={styles.count}>Барлығы: {questions.length}</span>
           </div>
 
           {questions.length === 0 ? (
             <div className="t-empty">
-              В тесте пока нет вопросов. Добавьте первый справа.
+              Тестте әзірге сұрақ жоқ. Оң жақтан алғашқысын қосыңыз.
             </div>
           ) : (
             questions.map((q) => (
@@ -71,10 +63,10 @@ export default async function PartBuilderPage({
                             : "t-chip t-chip-gold"
                         }
                       >
-                        {q.type === "choice" ? "С вариантами" : "Открытый"}
+                        {q.type === "choice" ? "Нұсқалармен" : "Ашық"}
                       </span>
                       <span className="t-chip">
-                        {q.points} {pointsLabel(q.points)}
+                        {q.points} ұпай
                       </span>
                     </div>
                     <p className={styles.qText}>{q.text}</p>
@@ -86,9 +78,9 @@ export default async function PartBuilderPage({
                     <input type="hidden" name="questionId" value={q.id} />
                     <SubmitButton
                       className="t-btn t-btn-danger t-btn-sm"
-                      pendingText="Удаление…"
+                      pendingText="Жойылуда…"
                     >
-                      Удалить
+                      Жою
                     </SubmitButton>
                   </form>
                 </div>
@@ -122,7 +114,7 @@ export default async function PartBuilderPage({
                           {opt}
                           {correct && (
                             <span style={{ marginLeft: "auto", fontSize: 12 }}>
-                              верный
+                              дұрыс
                             </span>
                           )}
                         </div>
@@ -131,7 +123,7 @@ export default async function PartBuilderPage({
                   </div>
                 ) : (
                   <p className={styles.openHint}>
-                    Открытый ответ — баллы выставляет преподаватель при проверке.
+                    Ашық жауап — ұпайды мұғалім тексеру кезінде қояды.
                   </p>
                 )}
               </article>

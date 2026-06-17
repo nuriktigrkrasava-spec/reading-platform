@@ -4,8 +4,8 @@ import ThemeBridge from "@/components/student/ThemeBridge";
 import styles from "./app.module.css";
 
 export const metadata = {
-  title: "Чтение",
-  description: "Учебное приложение для чтения",
+  title: "Оқу",
+  description: "Оқуға арналған оқу қолданбасы",
 };
 
 export default function StudentAppLayout({

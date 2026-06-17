@@ -3,57 +3,55 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "@/app/app/app.module.css";
+import StudentLogin from "./StudentLogin";
 
-type GateState = "checking" | "no-telegram" | "ready";
+type GateState = "checking" | "needs-login" | "no-telegram" | "ready";
 
 export default function TelegramGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [state, setState] = useState<GateState>("checking");
+  const [initData, setInitData] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
     const wa = window.Telegram?.WebApp;
     wa?.ready();
+    const data = wa?.initData ?? "";
 
     (async () => {
-      const initData = wa?.initData;
-      if (!initData) {
-        // Opened outside Telegram (or no init data) — show guidance,
-        // but still render children so a pre-existing cookie session works.
-        if (!cancelled) setState("no-telegram");
-        return;
-      }
-
       try {
-        const res = await fetch("/api/student/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData }),
-        });
-        const data = (await res.json().catch(() => null)) as { ok?: boolean } | null;
+        const res = await fetch("/api/student/auth", { method: "GET" });
+        const json = (await res.json().catch(() => null)) as
+          | { authenticated?: boolean }
+          | null;
         if (cancelled) return;
-        if (data?.ok) {
+
+        setInitData(data);
+        if (json?.authenticated) {
           setState("ready");
-          router.refresh();
+        } else if (data) {
+          setState("needs-login");
         } else {
           setState("no-telegram");
         }
       } catch {
-        if (!cancelled) setState("no-telegram");
+        if (cancelled) return;
+        setInitData(data);
+        setState(data ? "needs-login" : "no-telegram");
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, []);
 
   if (state === "checking") {
     return (
       <div className={styles.center}>
         <div className={styles.centerInner}>
           <div className={styles.spinner} />
-          <p className={styles.centerText}>Загрузка…</p>
+          <p className={styles.centerText}>Жүктелуде…</p>
         </div>
       </div>
     );
@@ -63,12 +61,24 @@ export default function TelegramGate({ children }: { children: React.ReactNode }
     return (
       <div className={styles.center}>
         <div className={styles.centerInner}>
-          <div className={styles.centerTitle}>Откройте приложение из Telegram</div>
+          <div className={styles.centerTitle}>Қолданбаны Telegram арқылы ашыңыз</div>
           <p className={styles.centerText}>
-            Чтобы продолжить, запустите приложение через бота в Telegram на телефоне.
+            Жалғастыру үшін қолданбаны телефондағы Telegram боты арқылы ашыңыз.
           </p>
         </div>
       </div>
+    );
+  }
+
+  if (state === "needs-login") {
+    return (
+      <StudentLogin
+        initData={initData}
+        onAuthed={() => {
+          setState("ready");
+          router.refresh();
+        }}
+      />
     );
   }
 

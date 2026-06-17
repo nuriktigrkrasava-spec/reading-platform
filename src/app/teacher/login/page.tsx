@@ -19,29 +19,29 @@ export default function LoginPage() {
     <div className={styles.screen}>
       <section className={styles.aside}>
         <div className={styles.asideTop}>
-          <span className={styles.mark}>Ч</span>
-          <span className={styles.asideBrand}>Читальня</span>
+          <span className={styles.mark}>О</span>
+          <span className={styles.asideBrand}>Оқу сауаттылығы</span>
         </div>
         <div className={styles.asideBody}>
           <p className={styles.asideQuote}>
-            Каждая прочитанная страница — это шаг ученика навстречу себе.
+            Әрбір оқылған бет — оқушының өзіне жасаған қадамы.
           </p>
         </div>
-        <p className={styles.asideMeta}>Кабинет преподавателя</p>
+        <p className={styles.asideMeta}>Мұғалім кабинеті</p>
       </section>
 
       <section className={styles.panel}>
         <div className={styles.card}>
-          <span className={styles.eyebrow}>Вход в кабинет</span>
-          <h1 className={styles.title}>С возвращением</h1>
+          <span className={styles.eyebrow}>Кабинетке кіру</span>
+          <h1 className={styles.title}>Қайта оралуыңызбен</h1>
           <p className={styles.lead}>
-            Введите пароль преподавателя, чтобы продолжить работу с платформой.
+            Платформамен жұмысты жалғастыру үшін мұғалім құпиясөзін енгізіңіз.
           </p>
 
           <form action={formAction} className={styles.form}>
             <div className={styles.field}>
               <label htmlFor="password" className="t-label">
-                Пароль
+                Құпиясөз
               </label>
               <input
                 id="password"
@@ -77,9 +77,9 @@ export default function LoginPage() {
 
             <SubmitButton
               className={`t-btn t-btn-primary ${styles.submit}`}
-              pendingText="Проверяем…"
+              pendingText="Тексерілуде…"
             >
-              Войти
+              Кіру
             </SubmitButton>
           </form>
         </div>

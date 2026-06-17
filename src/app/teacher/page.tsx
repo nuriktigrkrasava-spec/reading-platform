@@ -15,14 +15,6 @@ function initials(name: string): string {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-function partsLabel(n: number): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return "часть";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return "части";
-  return "частей";
-}
-
 export default async function OverviewPage() {
   const [students, books] = await Promise.all([listStudents(), listBooks()]);
 
@@ -47,30 +39,30 @@ export default async function OverviewPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Кабинет преподавателя"
-        title="Обзор"
-        description="Сводка по платформе и прогресс учеников по книгам, на которые они записаны."
+        eyebrow="Мұғалім кабинеті"
+        title="Шолу"
+        description="Платформа бойынша жиынтық дерек және оқушылардың кітаптары бойынша үлгерімі."
       />
 
       <div className={styles.stats}>
         <div className={styles.stat}>
           <div className={styles.statValue}>{students.length}</div>
-          <div className={styles.statLabel}>Учеников на платформе</div>
+          <div className={styles.statLabel}>Платформадағы оқушылар</div>
         </div>
         <div className={styles.stat}>
           <div className={styles.statValue}>{books.length}</div>
-          <div className={styles.statLabel}>Книг в библиотеке</div>
+          <div className={styles.statLabel}>Кітапханадағы кітаптар</div>
         </div>
         <div className={styles.stat}>
           <div className={styles.statValue}>{activeEnrollments}</div>
-          <div className={styles.statLabel}>Книг у учеников в работе</div>
+          <div className={styles.statLabel}>Оқушылар оқып жатқан кітаптар</div>
         </div>
       </div>
 
       {students.length === 0 ? (
         <div className="t-empty">
-          Учеников пока нет. Прогресс появится здесь, как только они начнут
-          читать.
+          Әзірге оқушылар жоқ. Олар оқи бастаған бойда үлгерім осында
+          көрінеді.
         </div>
       ) : (
         <div className={styles.students}>
@@ -82,8 +74,8 @@ export default async function OverviewPage() {
                   <div className={styles.studentName}>{student.name}</div>
                   <div className={styles.studentMeta}>
                     {student.grade == null
-                      ? "Класс не выбран"
-                      : `${gradeLabel(student.grade)} · ${progress.length} ${partsLabel(progress.length)} в работе`}
+                      ? "Сынып таңдалмаған"
+                      : `${gradeLabel(student.grade)} · ${progress.length} кітап оқуда`}
                   </div>
                 </div>
               </div>
@@ -91,8 +83,8 @@ export default async function OverviewPage() {
               {progress.length === 0 ? (
                 <p className={styles.noBooks}>
                   {student.grade == null
-                    ? "Ученик ещё не выбрал класс в приложении."
-                    : `Для ${gradeLabel(student.grade).toLowerCase()} пока нет книг.`}
+                    ? "Оқушы әлі қолданбада сыныбын таңдамаған."
+                    : `${gradeLabel(student.grade)} үшін әзірге кітап жоқ.`}
                 </p>
               ) : (
                 <div className={styles.books}>
@@ -114,8 +106,7 @@ export default async function OverviewPage() {
                         <span className={styles.percent}>{p.percent}%</span>
                       </div>
                       <span className={styles.partsCount}>
-                        {p.completedParts}{" "}
-                        {p.completedParts === 1 ? "часть" : "частей"} пройдено
+                        {p.completedParts} бөлім аяқталды
                       </span>
                     </div>
                   ))}

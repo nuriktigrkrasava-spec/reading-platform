@@ -716,3 +716,61 @@
   font-size: 13px;
   color: var(--s-hint);
 }
+
+/* ---------- Student login screen ---------- */
+
+.login {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+  background: var(--s-bg);
+  color: var(--s-text);
+}
+
+.loginCard {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--s-surface);
+  border: 1px solid var(--s-line);
+  border-radius: var(--s-radius-lg);
+  padding: 24px 20px;
+  box-shadow: var(--s-shadow);
+  animation: s-fade 0.35s ease both;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--s-hint);
+  padding-left: 2px;
+}
+
+.input {
+  width: 100%;
+  font: inherit;
+  font-size: 15.5px;
+  line-height: 1.4;
+  color: var(--s-text);
+  background: var(--s-surface-2);
+  border: 1px solid var(--s-line-strong);
+  border-radius: 12px;
+  padding: 13px;
+  min-height: 50px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--s-accent);
+  box-shadow: 0 0 0 3px var(--s-accent-wash);
+}

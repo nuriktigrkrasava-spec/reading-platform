@@ -14,7 +14,7 @@ async function requireAuth() {
 
 export async function loginAction(formData: FormData) {
   const password = String(formData.get("password") ?? "");
-  if (!checkPassword(password)) return { error: "Неверный пароль" };
+  if (!checkPassword(password)) return { error: "Қате құпиясөз" };
   await startSession();
   redirect("/teacher");
 }

@@ -14,7 +14,7 @@ export default function SubmitButton({
   const { pending } = useFormStatus();
   return (
     <button type="submit" className={className} disabled={pending}>
-      {pending ? pendingText ?? "Сохранение…" : children}
+      {pending ? pendingText ?? "Сақталуда…" : children}
     </button>
   );
 }

@@ -7,7 +7,7 @@ export default function LoadingScreen() {
     <div className={styles.center}>
       <div className={styles.centerInner}>
         <div className={styles.spinner} />
-        <p className={styles.centerText}>Загрузка…</p>
+        <p className={styles.centerText}>Жүктелуде…</p>
       </div>
     </div>
   );

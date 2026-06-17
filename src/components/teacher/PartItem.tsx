@@ -36,7 +36,7 @@ export default function PartItem({ part }: { part: Part }) {
                 <path d="M9 11l3 3L22 4" />
                 <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
               </svg>
-              Конструктор теста
+              Тест құрастырушы
             </Link>
 
             <button
@@ -44,7 +44,7 @@ export default function PartItem({ part }: { part: Part }) {
               className="t-btn t-btn-ghost t-btn-sm"
               onClick={() => setEditing((v) => !v)}
             >
-              {editing ? "Отмена" : "Изменить"}
+              {editing ? "Болдырмау" : "Өзгерту"}
             </button>
 
             <form action={deletePartAction}>
@@ -52,9 +52,9 @@ export default function PartItem({ part }: { part: Part }) {
               <input type="hidden" name="partId" value={part.id} />
               <SubmitButton
                 className="t-btn t-btn-danger t-btn-sm"
-                pendingText="Удаление…"
+                pendingText="Жойылуда…"
               >
-                Удалить
+                Жою
               </SubmitButton>
             </form>
           </div>
@@ -67,7 +67,7 @@ export default function PartItem({ part }: { part: Part }) {
           <input type="hidden" name="partId" value={part.id} />
           <div>
             <label className="t-label" htmlFor={`title-${part.id}`}>
-              Название части
+              Бөлім атауы
             </label>
             <input
               id={`title-${part.id}`}
@@ -79,7 +79,7 @@ export default function PartItem({ part }: { part: Part }) {
           </div>
           <div>
             <label className="t-label" htmlFor={`text-${part.id}`}>
-              Текст для чтения
+              Оқуға арналған мәтін
             </label>
             <textarea
               id={`text-${part.id}`}
@@ -91,14 +91,14 @@ export default function PartItem({ part }: { part: Part }) {
           </div>
           <div className={styles.editActions}>
             <SubmitButton className="t-btn t-btn-primary t-btn-sm">
-              Сохранить
+              Сақтау
             </SubmitButton>
             <button
               type="button"
               className="t-btn t-btn-ghost t-btn-sm"
               onClick={() => setEditing(false)}
             >
-              Отмена
+              Болдырмау
             </button>
           </div>
         </form>

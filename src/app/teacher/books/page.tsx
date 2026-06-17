@@ -14,16 +14,16 @@ export default async function BooksPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Библиотека"
-        title="Книги"
-        description="Управляйте книгами платформы: добавляйте произведения и разбивайте их на части для чтения."
+        eyebrow="Кітапхана"
+        title="Кітаптар"
+        description="Платформа кітаптарын басқарыңыз: шығармаларды қосып, оларды оқуға арналған бөлімдерге бөліңіз."
       />
 
       <div className={styles.layout}>
         <div className={styles.list}>
           {books.length === 0 ? (
             <div className="t-empty">
-              Пока нет ни одной книги. Создайте первую справа.
+              Әзірге бірде-бір кітап жоқ. Оң жақтан алғашқысын жасаңыз.
             </div>
           ) : (
             books.map((book) => (
@@ -64,7 +64,7 @@ export default async function BooksPage() {
                       href={`/teacher/books/${book.id}`}
                       className={styles.openLink}
                     >
-                      Открыть и редактировать
+                      Ашу және өңдеу
                       <svg
                         viewBox="0 0 24 24"
                         fill="none"
@@ -85,9 +85,9 @@ export default async function BooksPage() {
                     <input type="hidden" name="bookId" value={book.id} />
                     <SubmitButton
                       className="t-btn t-btn-danger t-btn-sm"
-                      pendingText="Удаление…"
+                      pendingText="Жойылуда…"
                     >
-                      Удалить
+                      Жою
                     </SubmitButton>
                   </form>
                 </div>
@@ -98,26 +98,26 @@ export default async function BooksPage() {
 
         <aside className={styles.aside}>
           <div className={styles.formCard}>
-            <h2 className={styles.formTitle}>Новая книга</h2>
+            <h2 className={styles.formTitle}>Жаңа кітап</h2>
             <p className={styles.formHint}>
-              Добавьте название и краткое описание произведения.
+              Шығарманың атауы мен қысқаша сипаттамасын қосыңыз.
             </p>
             <form action={createBookAction} className={styles.form}>
               <div>
                 <label htmlFor="title" className="t-label">
-                  Название
+                  Атауы
                 </label>
                 <input
                   id="title"
                   name="title"
                   required
                   className="t-input"
-                  placeholder="Например, «Капитанская дочка»"
+                  placeholder="Мысалы, «Менің атым Қожа»"
                 />
               </div>
               <div>
                 <label htmlFor="grade" className="t-label">
-                  Класс
+                  Сынып
                 </label>
                 <select id="grade" name="grade" required className="t-select" defaultValue={1}>
                   {GRADES.map((g) => (
@@ -129,21 +129,21 @@ export default async function BooksPage() {
               </div>
               <div>
                 <label htmlFor="description" className="t-label">
-                  Описание
+                  Сипаттама
                 </label>
                 <textarea
                   id="description"
                   name="description"
                   className="t-textarea"
-                  placeholder="О чём эта книга и для кого она"
+                  placeholder="Бұл кітап не туралы және кімге арналған"
                 />
               </div>
               <div className={styles.formActions}>
                 <SubmitButton
                   className="t-btn t-btn-primary"
-                  pendingText="Создаём…"
+                  pendingText="Жасалуда…"
                 >
-                  Добавить книгу
+                  Кітап қосу
                 </SubmitButton>
               </div>
             </form>

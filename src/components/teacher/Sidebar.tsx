@@ -6,10 +6,10 @@ import { logoutAction } from "@/app/teacher/actions";
 import styles from "@/app/teacher/layout.module.css";
 
 const links = [
-  { href: "/teacher", label: "Обзор", icon: "grid", exact: true },
-  { href: "/teacher/books", label: "Книги", icon: "book", exact: false },
-  { href: "/teacher/students", label: "Ученики", icon: "users", exact: false },
-  { href: "/teacher/grading", label: "Проверка", icon: "check", exact: false },
+  { href: "/teacher", label: "Шолу", icon: "grid", exact: true },
+  { href: "/teacher/books", label: "Кітаптар", icon: "book", exact: false },
+  { href: "/teacher/students", label: "Оқушылар", icon: "users", exact: false },
+  { href: "/teacher/grading", label: "Тексеру", icon: "check", exact: false },
 ];
 
 function Icon({ name }: { name: string }) {
@@ -66,9 +66,9 @@ export default function Sidebar() {
   return (
     <aside className={styles.sidebar}>
       <Link href="/teacher" className={styles.brand}>
-        <span className={styles.mark}>Ч</span>
+        <span className={styles.mark}>О</span>
         <span className={styles.brandText}>
-          <span className={styles.brandTitle}>Читальня</span>
+          <span className={styles.brandTitle}>Оқу сауаттылығы</span>
           <span className={styles.brandSub}>Кабинет</span>
         </span>
       </Link>
@@ -111,7 +111,7 @@ export default function Sidebar() {
               <path d="M16 17l5-5-5-5" />
               <path d="M21 12H9" />
             </svg>
-            Выйти
+            Шығу
           </button>
         </form>
       </div>
