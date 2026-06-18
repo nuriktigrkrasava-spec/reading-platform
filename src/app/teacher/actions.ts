@@ -106,10 +106,17 @@ export async function createQuestionAction(formData: FormData) {
       Number.isInteger(raw) && raw >= 0 && raw < options.length ? raw : 0;
   }
 
+  // Балл = максимум за вопрос. Для открытых вопросов держим диапазон 1–5
+  // (учитель при проверке ставит 0–5), для тестовых — минимум 1.
+  const rawPoints = Math.round(Number(formData.get("points") ?? 1)) || 1;
+  const points = type === "open"
+    ? Math.min(5, Math.max(1, rawPoints))
+    : Math.max(1, rawPoints);
+
   await questions.createQuestion({
     partId, type,
     text: String(formData.get("text") ?? ""),
-    points: Number(formData.get("points") ?? 1),
+    points,
     options, correctOptionIndex,
   });
   revalidatePath(`/teacher/books/${bookId}/parts/${partId}`);

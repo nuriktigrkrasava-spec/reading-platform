@@ -174,17 +174,24 @@ export default function QuestionBuilder({
 
         <div>
           <label htmlFor="points" className="t-label">
-            Сұрақ ұпайы
+            {type === "open" ? "Ең жоғары ұпай" : "Сұрақ ұпайы"}
           </label>
           <input
+            key={type}
             id="points"
             name="points"
             type="number"
             min={1}
-            defaultValue={1}
+            max={type === "open" ? 5 : undefined}
+            defaultValue={type === "open" ? 5 : 1}
             required
             className="t-input"
           />
+          {type === "open" && (
+            <p className={styles.hint}>
+              Тексергенде жауапты 0–5 ұпай аралығында бағалайсыз.
+            </p>
+          )}
         </div>
 
         <div>

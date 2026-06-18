@@ -1,12 +1,14 @@
 import { createServerSupabase } from "@/lib/supabase/client";
-import { studentFromRow, bookFromRow, questionFromRow } from "@/lib/db/mappers";
+import { studentFromRow, partFromRow } from "@/lib/db/mappers";
 import { listParts } from "@/lib/db/parts";
-import { listQuestions } from "@/lib/db/questions";
-import { computePartStatus } from "@/lib/progress/partStatus";
+import { listBooksForGrade } from "@/lib/db/books";
 import { unlockedPartIds } from "@/lib/progress/unlock";
-import { studentBookProgress } from "@/lib/db/overview";
+import {
+  loadPartData, statusFor, bookProgressFrom, type PartData,
+} from "@/lib/db/studentProgress";
 import type { Student, Book, Part, PartStatus, Question, Answer } from "@/lib/types";
 import type { BookProgress } from "@/lib/progress/bookProgress";
+import type { PartRow } from "@/lib/db/rowTypes";
 
 export async function upsertStudentByTelegram(input: {
   telegramId: string; name: string;
@@ -23,39 +25,46 @@ export interface EnrolledBook { book: Book; progress: BookProgress; }
 
 // Книги класса ученика + его прогресс по каждой. Доступ определяется
 // выбранным классом (grade), а не ручной записью учителя.
+// Раньше тут был N+1 на N+1 (по книге → по части): для класса с 5 книгами по
+// 30 частей выходило ~450 последовательных запросов. Теперь — ~4 пакетных:
+// книги класса, все их части, и одна пакетная загрузка данных ученика.
 export async function booksForGradeWithProgress(
   studentId: string, grade: number,
 ): Promise<EnrolledBook[]> {
+  const books = await listBooksForGrade(grade);
+  if (books.length === 0) return [];
+
   const db = createServerSupabase();
-  const { data, error } = await db.from("books")
-    .select("*").eq("grade", grade).order("created_at");
+  const { data: partRows, error } = await db.from("parts")
+    .select("*").in("book_id", books.map((b) => b.id)).order("order");
   if (error) throw error;
-  const books: Book[] = (data ?? []).map(bookFromRow);
-  const result: EnrolledBook[] = [];
-  for (const book of books) {
-    result.push({ book, progress: await studentBookProgress(studentId, book.id) });
+  const parts = ((partRows ?? []) as PartRow[]).map(partFromRow);
+
+  const data = await loadPartData(studentId, parts.map((p) => p.id));
+
+  const partsByBook = new Map<string, Part[]>();
+  for (const p of parts) {
+    const arr = partsByBook.get(p.bookId);
+    if (arr) arr.push(p);
+    else partsByBook.set(p.bookId, [p]);
   }
-  return result;
+
+  return books.map((book) => ({
+    book,
+    progress: bookProgressFrom(partsByBook.get(book.id) ?? [], data),
+  }));
 }
 
 export interface PartWithStatus { part: Part; status: PartStatus; unlocked: boolean; }
 
-export async function studentAnswersForPart(
-  studentId: string, partId: string,
-): Promise<Answer[]> {
-  const db = createServerSupabase();
-  const { data: attempt } = await db.from("attempts")
-    .select("id").eq("student_id", studentId).eq("part_id", partId).maybeSingle();
-  if (!attempt) return [];
-  const { data: rows } = await db.from("answers").select("*").eq("attempt_id", attempt.id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (rows ?? []).map((r: any) => ({
-    questionId: r.question_id,
-    selectedOptionIndex: r.selected_option_index,
-    textAnswer: r.text_answer,
-    graded: r.graded,
-    awardedPoints: r.awarded_points,
-    teacherComment: r.teacher_comment,
+function withStatuses(parts: Part[], data: PartData): PartWithStatus[] {
+  const statusById = new Map<string, PartStatus>();
+  for (const part of parts) statusById.set(part.id, statusFor(part.id, data));
+  const unlocked = unlockedPartIds(parts, statusById);
+  return parts.map((part) => ({
+    part,
+    status: statusById.get(part.id) ?? "not_started",
+    unlocked: unlocked.has(part.id),
   }));
 }
 
@@ -63,18 +72,8 @@ export async function partsWithStatus(
   studentId: string, bookId: string,
 ): Promise<PartWithStatus[]> {
   const parts = await listParts(bookId);
-  const statusById = new Map<string, PartStatus>();
-  for (const part of parts) {
-    const questions = await listQuestions(part.id);
-    const answers = await studentAnswersForPart(studentId, part.id);
-    statusById.set(part.id, computePartStatus(questions, answers));
-  }
-  const unlocked = unlockedPartIds(parts, statusById);
-  return parts.map((part) => ({
-    part,
-    status: statusById.get(part.id) ?? "not_started",
-    unlocked: unlocked.has(part.id),
-  }));
+  const data = await loadPartData(studentId, parts.map((p) => p.id));
+  return withStatuses(parts, data);
 }
 
 export interface PartDetail {
@@ -84,13 +83,16 @@ export interface PartDetail {
 export async function partDetail(
   studentId: string, bookId: string, partId: string,
 ): Promise<PartDetail | null> {
-  const all = await partsWithStatus(studentId, bookId);
+  const parts = await listParts(bookId);
+  const data = await loadPartData(studentId, parts.map((p) => p.id));
+  const all = withStatuses(parts, data);
   const target = all.find((p) => p.part.id === partId);
   if (!target) return null;
-  const db = createServerSupabase();
-  const { data: qrows } = await db.from("questions").select("*").eq("part_id", partId);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const questions = (qrows ?? []).map((r: any) => questionFromRow(r));
-  const answers = await studentAnswersForPart(studentId, partId);
-  return { part: target.part, questions, answers, status: target.status, unlocked: target.unlocked };
+  return {
+    part: target.part,
+    questions: data.questionsByPart.get(partId) ?? [],
+    answers: data.answersByPart.get(partId) ?? [],
+    status: target.status,
+    unlocked: target.unlocked,
+  };
 }
