@@ -35,9 +35,16 @@ export async function loadPartData(
 
   const db = createServerSupabase();
 
-  // 1. Все вопросы этих частей — один запрос.
-  const { data: qrows, error: qerr } = await db
-    .from("questions").select("*").in("part_id", partIds);
+  // 1+2. Вопросы частей и попытки ученика друг от друга не зависят —
+  // запускаем параллельно (на один сетевой round-trip меньше).
+  const [
+    { data: qrows, error: qerr },
+    { data: attempts, error: aerr },
+  ] = await Promise.all([
+    db.from("questions").select("*").in("part_id", partIds),
+    db.from("attempts").select("id, part_id")
+      .eq("student_id", studentId).in("part_id", partIds),
+  ]);
   if (qerr) throw qerr;
   for (const r of (qrows ?? []) as QuestionRow[]) {
     const q = questionFromRow(r);
@@ -46,10 +53,6 @@ export async function loadPartData(
     else questionsByPart.set(q.partId, [q]);
   }
 
-  // 2. Попытки именно этого ученика по этим частям — один запрос.
-  const { data: attempts, error: aerr } = await db
-    .from("attempts").select("id, part_id")
-    .eq("student_id", studentId).in("part_id", partIds);
   if (aerr) throw aerr;
   const partByAttempt = new Map<string, string>();
   for (const a of attempts ?? []) partByAttempt.set(a.id, a.part_id);
