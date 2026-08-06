@@ -11,9 +11,11 @@ alter table books alter column level set not null;
 alter table books add constraint books_level_key unique (level);
 
 -- Стартовый уровень ученика: с него он начинает лестницу.
--- Кто уже выбрал класс — начинает со своего класса и ничего не теряет.
+-- Все начинают с первого уровня — прежний класс не переносится (решение
+-- владельца платформы). Пройденные части при этом никуда не деваются:
+-- дойдя до своего уровня заново, ученик увидит их уже отмеченными.
+-- Учитель может поднять стартовый уровень любому на странице «Оқушылар».
 alter table students add column if not exists start_level int not null default 1;
-update students set start_level = coalesce(grade, 1);
 
 -- Таблица доступов осталась от первой версии и никогда не использовалась.
 drop table if exists enrollments;
