@@ -46,9 +46,8 @@ export interface Ladder {
 //
 // Пять последовательных запросов раньше стоили около пяти секунд на страницу:
 // база отвечает примерно за секунду на круг, и круги шли один за другим.
-// Теперь ученик, книги, части, вопросы и попытки уезжают одним параллельным
-// пакетом — ни один из них не нужен другому, — и остаётся дозапросить только
-// ответы, которым нужны id попыток. Два круга вместо пяти.
+// Теперь всё уезжает одним параллельным пакетом: ни один из запросов не нужен
+// другому, а ответы приходят вложенными в попытки. Один круг вместо пяти.
 export async function loadLadder(studentId: string): Promise<Ladder | null> {
   const db = createServerSupabase();
 
@@ -63,7 +62,7 @@ export async function loadLadder(studentId: string): Promise<Ladder | null> {
   ]);
   if (!student) return null;
 
-  const data = await partDataFrom(questionRows, attempts);
+  const data = partDataFrom(questionRows, attempts);
   const parts = partRows.map(partFromRow);
 
   const partsByBook = new Map<string, Part[]>();

@@ -45,7 +45,14 @@ function answerFromRow(r: AnswerRow): Answer {
   };
 }
 
-export interface AttemptRef { id: string; part_id: string }
+// Попытка вместе с её ответами: PostgREST умеет отдавать связанные строки
+// вложенными, и это экономит целый круг к базе — а круг здесь стоит около
+// секунды, так что экономия заметна глазом.
+export interface AttemptRef {
+  id: string;
+  part_id: string;
+  answers: AnswerRow[];
+}
 
 // Вопросы всей платформы в лёгком виде. Фильтр по частям не нужен: экранам
 // прогресса нужны вопросы всех книг сразу, а лишние строки ничего не стоят,
@@ -60,19 +67,19 @@ export function fetchScoringQuestions(): Promise<ScoringRow[]> {
 export function fetchStudentAttempts(studentId: string): Promise<AttemptRef[]> {
   const db = createServerSupabase();
   return fetchAllRows<AttemptRef>((from, to) =>
-    db.from("attempts").select("id, part_id")
+    db.from("attempts").select("id, part_id, answers(*)")
       .eq("student_id", studentId).order("id").range(from, to),
   );
 }
 
-// Собирает PartData из уже загруженных вопросов и попыток, дозапрашивая
-// только ответы. Так вопросы и попытки уезжают в общий параллельный пакет
-// вместе с книгами и частями, и на страницу остаётся два круга к базе
-// вместо пяти — при задержке около секунды на круг это решает всё.
-export async function partDataFrom(
+// Собирает PartData из уже загруженных строк — без единого запроса. Благодаря
+// этому вопросы и попытки (с вложенными ответами) уезжают в общий параллельный
+// пакет вместе с книгами и частями, и на страницу остаётся один круг к базе
+// вместо пяти. При задержке около секунды на круг это решает всё.
+export function partDataFrom(
   questionRows: ScoringRow[],
   attempts: AttemptRef[],
-): Promise<PartData> {
+): PartData {
   const questionsByPart = new Map<string, QuestionScoring[]>();
   const answersByPart = new Map<string, Answer[]>();
 
@@ -83,23 +90,11 @@ export async function partDataFrom(
     else questionsByPart.set(q.partId, [q]);
   }
 
-  const partByAttempt = new Map<string, string>();
-  for (const a of attempts) partByAttempt.set(a.id, a.part_id);
-  const attemptIds = [...partByAttempt.keys()];
-  if (attemptIds.length === 0) return { questionsByPart, answersByPart };
-
-  const db = createServerSupabase();
-  const arows = await fetchAllRows<AnswerRow>((from, to) =>
-    db.from("answers").select("*").in("attempt_id", attemptIds)
-      .order("id").range(from, to),
-  );
-  for (const r of arows) {
-    const partId = partByAttempt.get(r.attempt_id);
-    if (!partId) continue;
-    const ans = answerFromRow(r);
-    const arr = answersByPart.get(partId);
-    if (arr) arr.push(ans);
-    else answersByPart.set(partId, [ans]);
+  for (const a of attempts) {
+    const answers = (a.answers ?? []).map(answerFromRow);
+    const arr = answersByPart.get(a.part_id);
+    if (arr) arr.push(...answers);
+    else answersByPart.set(a.part_id, answers);
   }
 
   return { questionsByPart, answersByPart };
@@ -119,7 +114,7 @@ export async function loadPartData(
         .in("part_id", partIds).order("id").range(from, to),
     ),
     fetchAllRows<AttemptRef>((from, to) =>
-      db.from("attempts").select("id, part_id")
+      db.from("attempts").select("id, part_id, answers(*)")
         .eq("student_id", studentId).in("part_id", partIds)
         .order("id").range(from, to),
     ),
