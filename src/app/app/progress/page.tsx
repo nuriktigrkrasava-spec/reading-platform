@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getStudentId } from "@/lib/auth/student";
 import { getStudent } from "@/lib/db/students";
-import { booksForGradeWithProgress, partsWithStatus } from "@/lib/db/studentRepo";
+import { booksUpToLevel, partsWithStatus } from "@/lib/db/studentRepo";
 import LoadingScreen from "@/components/student/LoadingScreen";
 import { ChevronLeft, ChevronRight } from "@/components/student/icons";
 import styles from "../app.module.css";
@@ -15,9 +15,7 @@ export default async function ProgressPage() {
   const student = await getStudent(studentId);
   if (!student) return <LoadingScreen />;
 
-  const enrolled = student.grade != null
-    ? await booksForGradeWithProgress(studentId, student.grade)
-    : [];
+  const enrolled = await booksUpToLevel(studentId, student.startLevel);
 
   const rows = await Promise.all(
     enrolled.map(async ({ book, progress }) => {

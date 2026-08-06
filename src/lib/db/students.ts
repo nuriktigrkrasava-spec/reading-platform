@@ -16,8 +16,8 @@ export async function getStudent(studentId: string): Promise<Student | null> {
   return data ? studentFromRow(data) : null;
 }
 
-export async function setStudentGrade(studentId: string, grade: number): Promise<void> {
+export async function setStudentStartLevel(studentId: string, level: number): Promise<void> {
   const db = createServerSupabase();
-  const { error } = await db.from("students").update({ grade }).eq("id", studentId);
+  const { error } = await db.from("students").update({ start_level: level }).eq("id", studentId);
   if (error) throw error;
 }

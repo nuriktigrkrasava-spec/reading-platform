@@ -3,7 +3,7 @@ export interface BookRow {
   title: string;
   description: string;
   cover_url: string | null;
-  grade: number;
+  level: number;
   created_at: string;
 }
 export interface PartRow {
@@ -26,7 +26,7 @@ export interface StudentRow {
   id: string;
   telegram_id: string;
   name: string;
-  grade: number | null;
+  start_level: number;
   created_at: string;
 }
 export interface AnswerRow {

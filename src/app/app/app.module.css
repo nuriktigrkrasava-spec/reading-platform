@@ -672,51 +672,6 @@
   color: var(--s-accent-text);
 }
 
-/* Экран выбора класса */
-.classGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.classCard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 26px 12px;
-  border: 1px solid var(--s-line-strong);
-  border-radius: 16px;
-  background: var(--s-surface);
-  color: var(--s-text);
-  cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
-}
-
-.classCard:active {
-  transform: scale(0.98);
-  background: var(--s-accent-wash);
-}
-
-.classCard:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.classNum {
-  font-size: 34px;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--s-accent);
-}
-
-.classWord {
-  font-size: 13px;
-  color: var(--s-hint);
-}
-
 /* ---------- Student login screen ---------- */
 
 .login {

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { listStudents } from "@/lib/db/students";
 import { listBooks } from "@/lib/db/books";
 import { studentBookProgress } from "@/lib/db/overview";
-import { gradeLabel } from "@/lib/options";
+import { levelLabel } from "@/lib/options";
 import PageHeader from "@/components/teacher/PageHeader";
 import styles from "./overview.module.css";
 
@@ -20,11 +20,9 @@ export default async function OverviewPage() {
 
   const rows = await Promise.all(
     students.map(async (student) => {
-      const gradeBooks = student.grade != null
-        ? books.filter((b) => b.grade === student.grade)
-        : [];
+      const levelBooks = books.filter((b) => b.level <= student.startLevel);
       const progress = await Promise.all(
-        gradeBooks.map(async (book) => ({
+        levelBooks.map(async (book) => ({
           bookId: book.id,
           title: book.title,
           progress: await studentBookProgress(student.id, book.id),
@@ -73,18 +71,14 @@ export default async function OverviewPage() {
                 <div>
                   <div className={styles.studentName}>{student.name}</div>
                   <div className={styles.studentMeta}>
-                    {student.grade == null
-                      ? "Сынып таңдалмаған"
-                      : `${gradeLabel(student.grade)} · ${progress.length} кітап оқуда`}
+                    {`${levelLabel(student.startLevel)} · ${progress.length} кітап оқуда`}
                   </div>
                 </div>
               </div>
 
               {progress.length === 0 ? (
                 <p className={styles.noBooks}>
-                  {student.grade == null
-                    ? "Оқушы әлі қолданбада сыныбын таңдамаған."
-                    : `${gradeLabel(student.grade)} үшін әзірге кітап жоқ.`}
+                  {`${levelLabel(student.startLevel)} үшін әзірге кітап жоқ.`}
                 </p>
               ) : (
                 <div className={styles.books}>

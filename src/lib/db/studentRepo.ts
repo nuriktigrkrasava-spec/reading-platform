@@ -1,7 +1,7 @@
 import { createServerSupabase } from "@/lib/supabase/client";
 import { studentFromRow, partFromRow } from "@/lib/db/mappers";
 import { listParts } from "@/lib/db/parts";
-import { listBooksForGrade } from "@/lib/db/books";
+import { listBooksForLevel } from "@/lib/db/books";
 import { unlockedPartIds } from "@/lib/progress/unlock";
 import {
   loadPartData, statusFor, bookProgressFrom, type PartData,
@@ -23,15 +23,14 @@ export async function upsertStudentByTelegram(input: {
 
 export interface EnrolledBook { book: Book; progress: BookProgress; }
 
-// Книги класса ученика + его прогресс по каждой. Доступ определяется
-// выбранным классом (grade), а не ручной записью учителя.
-// Раньше тут был N+1 на N+1 (по книге → по части): для класса с 5 книгами по
+// Книги уровня + прогресс ученика по каждой.
+// Раньше тут был N+1 на N+1 (по книге → по части): для уровня с 5 книгами по
 // 30 частей выходило ~450 последовательных запросов. Теперь — ~4 пакетных:
-// книги класса, все их части, и одна пакетная загрузка данных ученика.
-export async function booksForGradeWithProgress(
-  studentId: string, grade: number,
+// книги уровня, все их части, и одна пакетная загрузка данных ученика.
+export async function booksUpToLevel(
+  studentId: string, level: number,
 ): Promise<EnrolledBook[]> {
-  const books = await listBooksForGrade(grade);
+  const books = await listBooksForLevel(level);
   if (books.length === 0) return [];
 
   const db = createServerSupabase();

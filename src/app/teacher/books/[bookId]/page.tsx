@@ -6,7 +6,7 @@ import { createPartAction, updateBookAction } from "@/app/teacher/actions";
 import PageHeader from "@/components/teacher/PageHeader";
 import SubmitButton from "@/components/teacher/SubmitButton";
 import PartItem from "@/components/teacher/PartItem";
-import { GRADES, gradeLabel } from "@/lib/options";
+import { levelLabel } from "@/lib/options";
 import styles from "./book.module.css";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,7 @@ export default async function BookPage({
   return (
     <>
       <PageHeader
-        eyebrow="Кітап"
+        eyebrow={levelLabel(book.level)}
         title={book.title}
         description={book.description || undefined}
         back={
@@ -52,38 +52,35 @@ export default async function BookPage({
 
         <aside className={styles.aside}>
           <div className={styles.formCard}>
-            <h2 className={styles.formTitle}>Кітап сыныбы</h2>
+            <h2 className={styles.formTitle}>Кітап деңгейі</h2>
             <p className={styles.formHint}>
-              Кітапты осы сыныпты таңдаған оқушылар көреді.
+              Деңгей — бұл бір кітап. Оқушы алдыңғы деңгейді бітіргенде осы
+              деңгей ашылады.
             </p>
             <form action={updateBookAction} className={styles.form}>
               <input type="hidden" name="bookId" value={book.id} />
               <input type="hidden" name="title" value={book.title} />
               <input type="hidden" name="description" value={book.description} />
               <div>
-                <label htmlFor="grade" className="t-label">
-                  Қай сыныпқа арналған
+                <label htmlFor="level" className="t-label">
+                  Деңгей
                 </label>
-                <select
-                  id="grade"
-                  name="grade"
+                <input
+                  id="level"
+                  name="level"
+                  type="number"
+                  min={1}
+                  defaultValue={book.level}
                   required
-                  className="t-select"
-                  defaultValue={book.grade}
-                >
-                  {GRADES.map((g) => (
-                    <option key={g} value={g}>
-                      {gradeLabel(g)}
-                    </option>
-                  ))}
-                </select>
+                  className="t-input"
+                />
               </div>
               <div>
                 <SubmitButton
                   className="t-btn t-btn-primary t-btn-sm"
                   pendingText="Сақталуда…"
                 >
-                  Сыныпты сақтау
+                  Деңгейді сақтау
                 </SubmitButton>
               </div>
             </form>
