@@ -1,9 +1,9 @@
 import { listStudents } from "@/lib/db/students";
 import { listBooks } from "@/lib/db/books";
-import { setStudentGradeAction } from "@/app/teacher/actions";
+import { setStudentStartLevelAction } from "@/app/teacher/actions";
 import PageHeader from "@/components/teacher/PageHeader";
 import SubmitButton from "@/components/teacher/SubmitButton";
-import { GRADES, gradeLabel } from "@/lib/options";
+import { levelLabel } from "@/lib/options";
 import styles from "./students.module.css";
 
 export const dynamic = "force-dynamic";
@@ -17,15 +17,13 @@ function initials(name: string): string {
 
 export default async function StudentsPage() {
   const [students, books] = await Promise.all([listStudents(), listBooks()]);
-  const booksByGrade = new Map<number, number>();
-  for (const b of books) booksByGrade.set(b.grade, (booksByGrade.get(b.grade) ?? 0) + 1);
 
   return (
     <>
       <PageHeader
         eyebrow="Қауымдастық"
         title="Оқушылар"
-        description="Оқушылар қолданбаға құпиясөзбен кіріп, өз аты-жөнін жазады. Мұнда олардың сыныбын өзгертуге болады."
+        description="Оқушылар қолданбаға құпиясөзбен кіріп, өз аты-жөнін жазады. Мұнда олардың бастапқы деңгейін өзгертуге болады."
       />
 
       {students.length === 0 ? (
@@ -35,9 +33,7 @@ export default async function StudentsPage() {
       ) : (
         <div className={styles.grid}>
           {students.map((student) => {
-            const booksCount = student.grade != null
-              ? booksByGrade.get(student.grade) ?? 0
-              : 0;
+            const booksCount = books.filter((b) => b.level <= student.startLevel).length;
             return (
               <article key={student.id} className={styles.card}>
                 <div className={styles.head}>
@@ -62,31 +58,25 @@ export default async function StudentsPage() {
                 </div>
 
                 <div className={styles.block}>
-                  <p className={styles.blockTitle}>Сынып</p>
-                  {student.grade != null ? (
-                    <p className={styles.emptyEnrolled}>
-                      {gradeLabel(student.grade)} · қолжетімді кітап: {booksCount}
-                    </p>
-                  ) : (
-                    <p className={styles.emptyEnrolled}>
-                      Оқушы әлі қолданбада сыныбын таңдамаған.
-                    </p>
-                  )}
+                  <p className={styles.blockTitle}>Бастапқы деңгей</p>
+                  <p className={styles.emptyEnrolled}>
+                    {levelLabel(student.startLevel)} · қолжетімді кітап: {booksCount}
+                  </p>
                 </div>
 
                 <div className={styles.block}>
-                  <p className={styles.blockTitle}>Сыныпты өзгерту</p>
-                  <form action={setStudentGradeAction} className={styles.enrollForm}>
+                  <p className={styles.blockTitle}>Деңгейді өзгерту</p>
+                  <form action={setStudentStartLevelAction} className={styles.enrollForm}>
                     <input type="hidden" name="studentId" value={student.id} />
                     <select
-                      name="grade"
+                      name="level"
                       required
                       className="t-select"
-                      defaultValue={student.grade ?? 1}
+                      defaultValue={student.startLevel}
                     >
-                      {GRADES.map((g) => (
-                        <option key={g} value={g}>
-                          {gradeLabel(g)}
+                      {books.map((b) => (
+                        <option key={b.id} value={b.level}>
+                          {levelLabel(b.level)} · {b.title}
                         </option>
                       ))}
                     </select>
@@ -97,6 +87,9 @@ export default async function StudentsPage() {
                       Сақтау
                     </SubmitButton>
                   </form>
+                  <p className={styles.emptyEnrolled}>
+                    Бастапқы деңгейден төмен деңгейлер де ашық болады.
+                  </p>
                 </div>
               </article>
             );

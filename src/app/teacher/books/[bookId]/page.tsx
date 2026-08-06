@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { listBooks } from "@/lib/db/books";
-import { listParts } from "@/lib/db/parts";
-import { createPartAction, updateBookAction } from "@/app/teacher/actions";
+import { listParts, countQuestionsByPart } from "@/lib/db/parts";
+import {
+  createPartAction, createPartsAction, setBookLevelAction,
+} from "@/app/teacher/actions";
 import PageHeader from "@/components/teacher/PageHeader";
 import SubmitButton from "@/components/teacher/SubmitButton";
 import PartItem from "@/components/teacher/PartItem";
-import { GRADES, gradeLabel } from "@/lib/options";
+import { levelLabel } from "@/lib/options";
 import styles from "./book.module.css";
 
 export const dynamic = "force-dynamic";
@@ -20,11 +22,12 @@ export default async function BookPage({
   const [books, parts] = await Promise.all([listBooks(), listParts(bookId)]);
   const book = books.find((b) => b.id === bookId);
   if (!book) notFound();
+  const questionCounts = await countQuestionsByPart(parts.map((p) => p.id));
 
   return (
     <>
       <PageHeader
-        eyebrow="Кітап"
+        eyebrow={levelLabel(book.level)}
         title={book.title}
         description={book.description || undefined}
         back={
@@ -46,34 +49,43 @@ export default async function BookPage({
               Бұл кітапта әзірге бөлім жоқ. Оң жақтан алғашқысын қосыңыз.
             </div>
           ) : (
-            parts.map((part) => <PartItem key={part.id} part={part} />)
+            parts.map((part, i) => (
+              <PartItem
+                key={part.id}
+                part={part}
+                questionCount={questionCounts.get(part.id) ?? 0}
+                isFirst={i === 0}
+                isLast={i === parts.length - 1}
+              />
+            ))
           )}
         </div>
 
         <aside className={styles.aside}>
           <div className={styles.formCard}>
-            <h2 className={styles.formTitle}>Кітап сыныбы</h2>
+            <h2 className={styles.formTitle}>Кітап деңгейі</h2>
             <p className={styles.formHint}>
-              Кітапты осы сыныпты таңдаған оқушылар көреді.
+              Деңгей — бұл бір кітап. Оқушы алдыңғы деңгейді бітіргенде осы
+              деңгей ашылады. Деңгейді таңдаған кітап екеуі орындарын
+              ауыстырады.
             </p>
-            <form action={updateBookAction} className={styles.form}>
+            <form action={setBookLevelAction} className={styles.form}>
               <input type="hidden" name="bookId" value={book.id} />
-              <input type="hidden" name="title" value={book.title} />
-              <input type="hidden" name="description" value={book.description} />
               <div>
-                <label htmlFor="grade" className="t-label">
-                  Қай сыныпқа арналған
+                <label htmlFor="level" className="t-label">
+                  Деңгей
                 </label>
                 <select
-                  id="grade"
-                  name="grade"
+                  id="level"
+                  name="level"
                   required
                   className="t-select"
-                  defaultValue={book.grade}
+                  defaultValue={book.level}
                 >
-                  {GRADES.map((g) => (
-                    <option key={g} value={g}>
-                      {gradeLabel(g)}
+                  {books.map((b) => (
+                    <option key={b.id} value={b.level}>
+                      {levelLabel(b.level)}
+                      {b.id === book.id ? "" : ` · ${b.title}`}
                     </option>
                   ))}
                 </select>
@@ -83,7 +95,7 @@ export default async function BookPage({
                   className="t-btn t-btn-primary t-btn-sm"
                   pendingText="Сақталуда…"
                 >
-                  Сыныпты сақтау
+                  Деңгейді сақтау
                 </SubmitButton>
               </div>
             </form>
@@ -126,6 +138,40 @@ export default async function BookPage({
                   pendingText="Қосылуда…"
                 >
                   Бөлім қосу
+                </SubmitButton>
+              </div>
+            </form>
+          </div>
+
+          <div className={styles.formCard}>
+            <h2 className={styles.formTitle}>Бірден бірнеше бөлім</h2>
+            <p className={styles.formHint}>
+              Бос бөлімдер «12-бөлім» деген атпен қосылады — мәтін мен
+              сұрақтарды кейін жазасыз.
+            </p>
+            <form action={createPartsAction} className={styles.form}>
+              <input type="hidden" name="bookId" value={book.id} />
+              <div>
+                <label htmlFor="count" className="t-label">
+                  Бөлім саны
+                </label>
+                <input
+                  id="count"
+                  name="count"
+                  type="number"
+                  min={1}
+                  max={50}
+                  defaultValue={10}
+                  required
+                  className="t-input"
+                />
+              </div>
+              <div>
+                <SubmitButton
+                  className="t-btn t-btn-ghost"
+                  pendingText="Құрылуда…"
+                >
+                  Бос бөлімдерді қосу
                 </SubmitButton>
               </div>
             </form>

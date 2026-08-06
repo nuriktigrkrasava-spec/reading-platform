@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { listBooks } from "@/lib/db/books";
-import { createBookAction, deleteBookAction } from "@/app/teacher/actions";
+import {
+  createBookAction, deleteBookAction, moveBookLevelAction,
+} from "@/app/teacher/actions";
 import PageHeader from "@/components/teacher/PageHeader";
 import SubmitButton from "@/components/teacher/SubmitButton";
-import { GRADES, gradeLabel } from "@/lib/options";
+import { levelLabel } from "@/lib/options";
 import styles from "./books.module.css";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +28,7 @@ export default async function BooksPage() {
               Әзірге бірде-бір кітап жоқ. Оң жақтан алғашқысын жасаңыз.
             </div>
           ) : (
-            books.map((book) => (
+            books.map((book, i) => (
               <article key={book.id} className={styles.bookCard}>
                 <Link
                   href={`/teacher/books/${book.id}`}
@@ -53,9 +55,31 @@ export default async function BooksPage() {
                   >
                     {book.title}
                   </Link>
-                  <span className="t-chip t-chip-clay" style={{ marginTop: 6 }}>
-                    {gradeLabel(book.grade)}
-                  </span>
+                  <div className={styles.levelRow}>
+                    <span className="t-chip t-chip-clay">{levelLabel(book.level)}</span>
+                    <form action={moveBookLevelAction} className={styles.moveForm}>
+                      <input type="hidden" name="bookId" value={book.id} />
+                      <input type="hidden" name="direction" value="up" />
+                      <SubmitButton
+                        className="t-btn t-btn-ghost t-btn-sm"
+                        pendingText="…"
+                        disabled={i === 0}
+                      >
+                        ↑
+                      </SubmitButton>
+                    </form>
+                    <form action={moveBookLevelAction} className={styles.moveForm}>
+                      <input type="hidden" name="bookId" value={book.id} />
+                      <input type="hidden" name="direction" value="down" />
+                      <SubmitButton
+                        className="t-btn t-btn-ghost t-btn-sm"
+                        pendingText="…"
+                        disabled={i === books.length - 1}
+                      >
+                        ↓
+                      </SubmitButton>
+                    </form>
+                  </div>
                   {book.description && (
                     <p className={styles.bookDesc}>{book.description}</p>
                   )}
@@ -100,7 +124,8 @@ export default async function BooksPage() {
           <div className={styles.formCard}>
             <h2 className={styles.formTitle}>Жаңа кітап</h2>
             <p className={styles.formHint}>
-              Шығарманың атауы мен қысқаша сипаттамасын қосыңыз.
+              Шығарманың атауы мен қысқаша сипаттамасын қосыңыз. Жаңа кітап
+              келесі бос деңгейге қосылады.
             </p>
             <form action={createBookAction} className={styles.form}>
               <div>
@@ -114,18 +139,6 @@ export default async function BooksPage() {
                   className="t-input"
                   placeholder="Мысалы, «Менің атым Қожа»"
                 />
-              </div>
-              <div>
-                <label htmlFor="grade" className="t-label">
-                  Сынып
-                </label>
-                <select id="grade" name="grade" required className="t-select" defaultValue={1}>
-                  {GRADES.map((g) => (
-                    <option key={g} value={g}>
-                      {gradeLabel(g)}
-                    </option>
-                  ))}
-                </select>
               </div>
               <div>
                 <label htmlFor="description" className="t-label">

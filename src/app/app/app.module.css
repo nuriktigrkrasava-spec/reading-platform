@@ -174,6 +174,30 @@
   margin-top: 2px;
 }
 
+/* Лестница уровней: уровень — это книга, поэтому номер идёт над названием */
+.levelBadge {
+  display: inline-block;
+  margin-bottom: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--s-accent);
+  background: var(--s-accent-wash);
+}
+
+.bookCardLocked {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.lockedNote {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--s-hint);
+}
+
 /* progress bar */
 .progress {
   margin-top: 14px;
@@ -670,51 +694,6 @@
 .optionChecked .optionLetter {
   background: var(--s-accent);
   color: var(--s-accent-text);
-}
-
-/* Экран выбора класса */
-.classGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.classCard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 26px 12px;
-  border: 1px solid var(--s-line-strong);
-  border-radius: 16px;
-  background: var(--s-surface);
-  color: var(--s-text);
-  cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
-}
-
-.classCard:active {
-  transform: scale(0.98);
-  background: var(--s-accent-wash);
-}
-
-.classCard:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.classNum {
-  font-size: 34px;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--s-accent);
-}
-
-.classWord {
-  font-size: 13px;
-  color: var(--s-hint);
 }
 
 /* ---------- Student login screen ---------- */

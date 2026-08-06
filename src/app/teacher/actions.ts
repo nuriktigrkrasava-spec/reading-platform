@@ -24,9 +24,9 @@ export async function logoutAction() {
   redirect("/teacher/login");
 }
 
-function parseGrade(value: FormDataEntryValue | null, fallback = 1): number {
+function parseLevel(value: FormDataEntryValue | null, fallback = 1): number {
   const n = Number(value ?? fallback);
-  return Number.isInteger(n) && n >= 1 && n <= 4 ? n : fallback;
+  return Number.isInteger(n) && n >= 1 ? n : fallback;
 }
 
 export async function createBookAction(formData: FormData) {
@@ -34,9 +34,9 @@ export async function createBookAction(formData: FormData) {
   await books.createBook({
     title: String(formData.get("title") ?? ""),
     description: String(formData.get("description") ?? ""),
-    grade: parseGrade(formData.get("grade")),
   });
   revalidatePath("/teacher/books");
+  revalidatePath("/app");
 }
 
 export async function updateBookAction(formData: FormData) {
@@ -45,10 +45,26 @@ export async function updateBookAction(formData: FormData) {
   await books.updateBook(bookId, {
     title: String(formData.get("title") ?? ""),
     description: String(formData.get("description") ?? ""),
-    grade: parseGrade(formData.get("grade")),
   });
   revalidatePath("/teacher/books");
   revalidatePath(`/teacher/books/${bookId}`);
+}
+
+export async function setBookLevelAction(formData: FormData) {
+  await requireAuth();
+  const bookId = String(formData.get("bookId"));
+  await books.setBookLevel(bookId, parseLevel(formData.get("level")));
+  revalidatePath("/teacher/books");
+  revalidatePath(`/teacher/books/${bookId}`);
+  revalidatePath("/app");
+}
+
+export async function moveBookLevelAction(formData: FormData) {
+  await requireAuth();
+  const direction = formData.get("direction") === "up" ? "up" : "down";
+  await books.moveBookLevel(String(formData.get("bookId")), direction);
+  revalidatePath("/teacher/books");
+  revalidatePath("/app");
 }
 
 export async function deleteBookAction(formData: FormData) {
@@ -66,6 +82,22 @@ export async function createPartAction(formData: FormData) {
     title: String(formData.get("title") ?? ""),
     readingText: String(formData.get("readingText") ?? ""),
   });
+  revalidatePath(`/teacher/books/${bookId}`);
+}
+
+export async function createPartsAction(formData: FormData) {
+  await requireAuth();
+  const bookId = String(formData.get("bookId"));
+  const count = Number(formData.get("count") ?? 1);
+  await parts.createParts(bookId, Number.isFinite(count) ? count : 1);
+  revalidatePath(`/teacher/books/${bookId}`);
+}
+
+export async function movePartAction(formData: FormData) {
+  await requireAuth();
+  const bookId = String(formData.get("bookId"));
+  const direction = formData.get("direction") === "up" ? "up" : "down";
+  await parts.movePart(String(formData.get("partId")), bookId, direction);
   revalidatePath(`/teacher/books/${bookId}`);
 }
 
@@ -130,11 +162,11 @@ export async function deleteQuestionAction(formData: FormData) {
   revalidatePath(`/teacher/books/${bookId}/parts/${partId}`);
 }
 
-export async function setStudentGradeAction(formData: FormData) {
+export async function setStudentStartLevelAction(formData: FormData) {
   await requireAuth();
-  await students.setStudentGrade(
+  await students.setStudentStartLevel(
     String(formData.get("studentId")),
-    parseGrade(formData.get("grade")),
+    parseLevel(formData.get("level")),
   );
   revalidatePath("/teacher/students");
   revalidatePath("/teacher");

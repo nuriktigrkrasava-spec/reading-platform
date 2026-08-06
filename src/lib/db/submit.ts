@@ -1,6 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase/client";
 import { listQuestions } from "@/lib/db/questions";
-import { partsWithStatus } from "@/lib/db/studentRepo";
+import { bookView } from "@/lib/db/studentRepo";
 
 export interface SubmittedAnswer {
   questionId: string;
@@ -13,24 +13,24 @@ export async function submitPart(
 ): Promise<void> {
   const db = createServerSupabase();
 
-  // 1. Найти part и класс его книги. Нет такого part — no-op.
+  // 1. Найти книгу этой части. Нет такого part — no-op.
   const { data: partRow, error: perr } = await db.from("parts")
-    .select("book_id, books!inner(grade)").eq("id", partId).maybeSingle();
+    .select("book_id").eq("id", partId).maybeSingle();
   if (perr) throw perr;
   if (!partRow) return;
   const bookId = partRow.book_id as string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const bookGrade = (partRow as any).books?.grade as number | undefined;
 
-  // 2. Класс ученика должен совпадать с классом книги. Иначе — no-op.
+  // 2. Уровень книги должен быть открыт ученику — по той же лестнице, что и
+  // в интерфейсе: стартовый уровень плюс пройденные целиком уровни выше.
   const { data: studentRow, error: serr } = await db.from("students")
-    .select("grade").eq("id", studentId).maybeSingle();
+    .select("start_level").eq("id", studentId).maybeSingle();
   if (serr) throw serr;
-  if (!studentRow || studentRow.grade == null || studentRow.grade !== bookGrade) return;
+  if (!studentRow) return;
 
-  // 3. Part должна быть разблокирована для этого студента. Иначе — no-op.
-  const statuses = await partsWithStatus(studentId, bookId);
-  const entry = statuses.find((p) => p.part.id === partId);
+  // 3. И сама часть должна быть открыта. Обе проверки — из одной загрузки.
+  const { unlocked, parts } = await bookView(studentId, studentRow.start_level, bookId);
+  if (!unlocked) return;
+  const entry = parts.find((p) => p.part.id === partId);
   if (!entry || !entry.unlocked) return;
 
   // 4. Идемпотентность: уже отправлено — no-op.

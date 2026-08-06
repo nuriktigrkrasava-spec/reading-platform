@@ -4,9 +4,9 @@ import { bookFromRow, partFromRow, questionFromRow, studentFromRow } from "@/lib
 describe("mappers", () => {
   it("maps book row to domain", () => {
     const b = bookFromRow({
-      id: "1", title: "T", description: "D", cover_url: null, grade: 2, created_at: "x",
+      id: "1", title: "T", description: "D", cover_url: null, level: 2, created_at: "x",
     });
-    expect(b).toEqual({ id: "1", title: "T", description: "D", coverUrl: null, grade: 2 });
+    expect(b).toEqual({ id: "1", title: "T", description: "D", coverUrl: null, level: 2 });
   });
   it("maps part row to domain", () => {
     const p = partFromRow({
@@ -26,15 +26,8 @@ describe("mappers", () => {
   });
   it("maps student row to domain", () => {
     const s = studentFromRow({
-      id: "1", telegram_id: "123", name: "N", grade: 3, created_at: "x",
+      id: "1", telegram_id: "123", name: "N", start_level: 3, created_at: "x",
     });
-    expect(s).toEqual({ id: "1", telegramId: "123", name: "N", grade: 3 });
-  });
-
-  it("maps student without chosen grade to null", () => {
-    const s = studentFromRow({
-      id: "1", telegram_id: "123", name: "N", grade: null, created_at: "x",
-    });
-    expect(s.grade).toBeNull();
+    expect(s).toEqual({ id: "1", telegramId: "123", name: "N", startLevel: 3 });
   });
 });

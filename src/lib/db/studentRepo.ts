@@ -1,8 +1,10 @@
 import { createServerSupabase } from "@/lib/supabase/client";
 import { studentFromRow, partFromRow } from "@/lib/db/mappers";
 import { listParts } from "@/lib/db/parts";
-import { listBooksForGrade } from "@/lib/db/books";
+import { listQuestions } from "@/lib/db/questions";
+import { listBooks } from "@/lib/db/books";
 import { unlockedPartIds } from "@/lib/progress/unlock";
+import { unlockedThroughLevel, isLevelUnlocked } from "@/lib/progress/levelUnlock";
 import {
   loadPartData, statusFor, bookProgressFrom, type PartData,
 } from "@/lib/db/studentProgress";
@@ -21,18 +23,36 @@ export async function upsertStudentByTelegram(input: {
   return studentFromRow(data);
 }
 
-export interface EnrolledBook { book: Book; progress: BookProgress; }
+export interface LevelEntry {
+  book: Book;
+  progress: BookProgress;
+  unlocked: boolean;
+  pendingReview: number; // частей, ждущих проверки учителем
+}
 
-// Книги класса ученика + его прогресс по каждой. Доступ определяется
-// выбранным классом (grade), а не ручной записью учителя.
-// Раньше тут был N+1 на N+1 (по книге → по части): для класса с 5 книгами по
-// 30 частей выходило ~450 последовательных запросов. Теперь — ~4 пакетных:
-// книги класса, все их части, и одна пакетная загрузка данных ученика.
-export async function booksForGradeWithProgress(
-  studentId: string, grade: number,
-): Promise<EnrolledBook[]> {
-  const books = await listBooksForGrade(grade);
-  if (books.length === 0) return [];
+interface Ladder {
+  books: Book[];
+  partsByBook: Map<string, Part[]>;
+  data: PartData;
+  statusById: Map<string, PartStatus>;
+  unlockedThrough: number;
+}
+
+// Одна загрузка всего, что нужно экранам ученика: книги, их части, данные
+// прогресса и посчитанная граница открытых уровней. Три пакетных запроса
+// на страницу.
+//
+// Раньше страница книги грузила это дважды: сначала чтобы проверить доступ
+// к уровню, потом заново ради статусов частей. Теперь загрузка одна, а
+// проверка доступа и список частей считаются из общего результата.
+async function loadLadder(studentId: string, startLevel: number): Promise<Ladder> {
+  const books = await listBooks();
+  const empty: Ladder = {
+    books, partsByBook: new Map(),
+    data: { questionsByPart: new Map(), answersByPart: new Map() },
+    statusById: new Map(), unlockedThrough: startLevel,
+  };
+  if (books.length === 0) return empty;
 
   const db = createServerSupabase();
   const { data: partRows, error } = await db.from("parts")
@@ -49,10 +69,51 @@ export async function booksForGradeWithProgress(
     else partsByBook.set(p.bookId, [p]);
   }
 
-  return books.map((book) => ({
-    book,
-    progress: bookProgressFrom(partsByBook.get(book.id) ?? [], data),
-  }));
+  const statusById = new Map<string, PartStatus>();
+  for (const p of parts) statusById.set(p.id, statusFor(p.id, data));
+
+  const unlockedThrough = unlockedThroughLevel(
+    books.map((b) => ({
+      level: b.level,
+      partIds: (partsByBook.get(b.id) ?? []).map((p) => p.id),
+    })),
+    startLevel,
+    statusById,
+  );
+
+  return { books, partsByBook, data, statusById, unlockedThrough };
+}
+
+export async function levelsWithProgress(
+  studentId: string, startLevel: number,
+): Promise<LevelEntry[]> {
+  const l = await loadLadder(studentId, startLevel);
+  return l.books.map((book) => {
+    const parts = l.partsByBook.get(book.id) ?? [];
+    return {
+      book,
+      progress: bookProgressFrom(parts, l.data),
+      unlocked: isLevelUnlocked(book.level, l.unlockedThrough),
+      pendingReview: parts.filter(
+        (p) => l.statusById.get(p.id) === "pending_review",
+      ).length,
+    };
+  });
+}
+
+export interface BookView { unlocked: boolean; parts: PartWithStatus[]; }
+
+// Доступ к книге и статусы её частей за одну загрузку.
+export async function bookView(
+  studentId: string, startLevel: number, bookId: string,
+): Promise<BookView> {
+  const l = await loadLadder(studentId, startLevel);
+  const book = l.books.find((b) => b.id === bookId);
+  if (!book) return { unlocked: false, parts: [] };
+  return {
+    unlocked: isLevelUnlocked(book.level, l.unlockedThrough),
+    parts: withStatuses(l.partsByBook.get(bookId) ?? [], l.data),
+  };
 }
 
 export interface PartWithStatus { part: Part; status: PartStatus; unlocked: boolean; }
@@ -77,22 +138,30 @@ export async function partsWithStatus(
 }
 
 export interface PartDetail {
-  part: Part; questions: Question[]; answers: Answer[]; status: PartStatus; unlocked: boolean;
+  part: Part; questions: Question[]; answers: Answer[]; status: PartStatus;
+  unlocked: boolean; bookUnlocked: boolean;
 }
 
+// Экран одной части: доступ к книге, статус части и её вопросы целиком.
+// Тексты и варианты грузятся только здесь и только для этой части — общая
+// загрузка прогресса тянет по вопросам лишь тип и баллы.
 export async function partDetail(
-  studentId: string, bookId: string, partId: string,
+  studentId: string, startLevel: number, bookId: string, partId: string,
 ): Promise<PartDetail | null> {
-  const parts = await listParts(bookId);
-  const data = await loadPartData(studentId, parts.map((p) => p.id));
-  const all = withStatuses(parts, data);
+  const l = await loadLadder(studentId, startLevel);
+  const book = l.books.find((b) => b.id === bookId);
+  if (!book) return null;
+
+  const all = withStatuses(l.partsByBook.get(bookId) ?? [], l.data);
   const target = all.find((p) => p.part.id === partId);
   if (!target) return null;
+
   return {
     part: target.part,
-    questions: data.questionsByPart.get(partId) ?? [],
-    answers: data.answersByPart.get(partId) ?? [],
+    questions: await listQuestions(partId),
+    answers: l.data.answersByPart.get(partId) ?? [],
     status: target.status,
     unlocked: target.unlocked,
+    bookUnlocked: isLevelUnlocked(book.level, l.unlockedThrough),
   };
 }

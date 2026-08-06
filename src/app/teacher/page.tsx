@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { listStudents } from "@/lib/db/students";
 import { listBooks } from "@/lib/db/books";
-import { studentBookProgress } from "@/lib/db/overview";
-import { gradeLabel } from "@/lib/options";
+import { overviewRows } from "@/lib/db/allProgress";
+import { levelLabel } from "@/lib/options";
 import PageHeader from "@/components/teacher/PageHeader";
 import styles from "./overview.module.css";
 
@@ -16,25 +15,10 @@ function initials(name: string): string {
 }
 
 export default async function OverviewPage() {
-  const [students, books] = await Promise.all([listStudents(), listBooks()]);
-
-  const rows = await Promise.all(
-    students.map(async (student) => {
-      const gradeBooks = student.grade != null
-        ? books.filter((b) => b.grade === student.grade)
-        : [];
-      const progress = await Promise.all(
-        gradeBooks.map(async (book) => ({
-          bookId: book.id,
-          title: book.title,
-          progress: await studentBookProgress(student.id, book.id),
-        })),
-      );
-      return { student, progress };
-    }),
+  const [rows, allBooks] = await Promise.all([overviewRows(), listBooks()]);
+  const activeEnrollments = rows.reduce(
+    (s, r) => s + r.books.filter((b) => b.unlocked).length, 0,
   );
-
-  const activeEnrollments = rows.reduce((s, r) => s + r.progress.length, 0);
 
   return (
     <>
@@ -46,11 +30,11 @@ export default async function OverviewPage() {
 
       <div className={styles.stats}>
         <div className={styles.stat}>
-          <div className={styles.statValue}>{students.length}</div>
+          <div className={styles.statValue}>{rows.length}</div>
           <div className={styles.statLabel}>Платформадағы оқушылар</div>
         </div>
         <div className={styles.stat}>
-          <div className={styles.statValue}>{books.length}</div>
+          <div className={styles.statValue}>{allBooks.length}</div>
           <div className={styles.statLabel}>Кітапханадағы кітаптар</div>
         </div>
         <div className={styles.stat}>
@@ -59,42 +43,37 @@ export default async function OverviewPage() {
         </div>
       </div>
 
-      {students.length === 0 ? (
+      {rows.length === 0 ? (
         <div className="t-empty">
           Әзірге оқушылар жоқ. Олар оқи бастаған бойда үлгерім осында
           көрінеді.
         </div>
       ) : (
         <div className={styles.students}>
-          {rows.map(({ student, progress }) => (
+          {rows.map(({ student, unlockedThrough, books }) => (
             <section key={student.id} className={styles.student}>
               <div className={styles.studentHead}>
                 <span className={styles.avatar}>{initials(student.name)}</span>
                 <div>
                   <div className={styles.studentName}>{student.name}</div>
                   <div className={styles.studentMeta}>
-                    {student.grade == null
-                      ? "Сынып таңдалмаған"
-                      : `${gradeLabel(student.grade)} · ${progress.length} кітап оқуда`}
+                    {`${levelLabel(unlockedThrough)} · ${books.filter((b) => b.unlocked).length} кітап қолжетімді`}
                   </div>
                 </div>
               </div>
 
-              {progress.length === 0 ? (
-                <p className={styles.noBooks}>
-                  {student.grade == null
-                    ? "Оқушы әлі қолданбада сыныбын таңдамаған."
-                    : `${gradeLabel(student.grade)} үшін әзірге кітап жоқ.`}
-                </p>
+              {books.length === 0 ? (
+                <p className={styles.noBooks}>Әзірге қолжетімді кітап жоқ.</p>
               ) : (
                 <div className={styles.books}>
-                  {progress.map(({ bookId, title, progress: p }) => (
-                    <div key={bookId} className={styles.bookRow}>
+                  {books.map(({ book, progress: p, unlocked }) => (
+                    <div key={book.id} className={styles.bookRow}>
                       <Link
-                        href={`/teacher/books/${bookId}`}
+                        href={`/teacher/books/${book.id}`}
                         className={styles.bookTitle}
                       >
-                        {title}
+                        {unlocked ? "" : "🔒 "}
+                        {levelLabel(book.level)} · {book.title}
                       </Link>
                       <div className={styles.progressWrap}>
                         <div className={styles.track}>

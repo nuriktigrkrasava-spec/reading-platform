@@ -7,10 +7,9 @@ export function optionLetter(index: number): string {
   return String(index + 1); // запасной вариант, если букв не хватит
 }
 
-// Доступные классы платформы (1–4).
-export const GRADES = [1, 2, 3, 4] as const;
-export type Grade = (typeof GRADES)[number];
-
-export function gradeLabel(grade: number): string {
-  return `${grade}-сынып`;
+// Подпись уровня в интерфейсе. Уровень — это книга, поэтому рядом с этой
+// подписью всегда показывается название книги. Фиксированного списка уровней
+// нет: он строится из списка книг.
+export function levelLabel(level: number): string {
+  return `${level}-деңгей`;
 }

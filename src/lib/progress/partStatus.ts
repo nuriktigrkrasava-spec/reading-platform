@@ -1,7 +1,7 @@
-import type { Question, Answer, PartStatus } from "@/lib/types";
+import type { QuestionScoring, Answer, PartStatus } from "@/lib/types";
 
 export function computePartStatus(
-  questions: Question[],
+  questions: QuestionScoring[],
   answers: Answer[],
 ): PartStatus {
   if (answers.length === 0) return "not_started";
