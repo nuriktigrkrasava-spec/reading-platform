@@ -1,6 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase/client";
 import { listQuestions } from "@/lib/db/questions";
-import { partsWithStatus, isBookUnlockedForStudent } from "@/lib/db/studentRepo";
+import { bookView } from "@/lib/db/studentRepo";
 
 export interface SubmittedAnswer {
   questionId: string;
@@ -26,11 +26,11 @@ export async function submitPart(
     .select("start_level").eq("id", studentId).maybeSingle();
   if (serr) throw serr;
   if (!studentRow) return;
-  if (!(await isBookUnlockedForStudent(studentId, studentRow.start_level, bookId))) return;
 
-  // 3. Part должна быть разблокирована для этого студента. Иначе — no-op.
-  const statuses = await partsWithStatus(studentId, bookId);
-  const entry = statuses.find((p) => p.part.id === partId);
+  // 3. И сама часть должна быть открыта. Обе проверки — из одной загрузки.
+  const { unlocked, parts } = await bookView(studentId, studentRow.start_level, bookId);
+  if (!unlocked) return;
+  const entry = parts.find((p) => p.part.id === partId);
   if (!entry || !entry.unlocked) return;
 
   // 4. Идемпотентность: уже отправлено — no-op.

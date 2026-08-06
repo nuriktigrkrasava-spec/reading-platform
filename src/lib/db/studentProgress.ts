@@ -1,16 +1,35 @@
 import { createServerSupabase } from "@/lib/supabase/client";
-import { questionFromRow } from "@/lib/db/mappers";
 import { computePartStatus } from "@/lib/progress/partStatus";
 import { computeBookProgress, type BookProgress } from "@/lib/progress/bookProgress";
-import type { Answer, Part, PartStatus, Question } from "@/lib/types";
-import type { AnswerRow, QuestionRow } from "@/lib/db/rowTypes";
+import type { Answer, Part, PartStatus, QuestionScoring } from "@/lib/types";
+import type { AnswerRow } from "@/lib/db/rowTypes";
+
+// Только те колонки вопроса, что нужны для статуса и баллов. Текст и варианты
+// не запрашиваются: на списке частей они не показываются, а весят больше всего
+// остального вместе взятого.
+const SCORING_COLUMNS = "id, part_id, type, points, correct_option_index";
+
+interface ScoringRow {
+  id: string;
+  part_id: string;
+  type: "choice" | "open";
+  points: number;
+  correct_option_index: number | null;
+}
+
+function scoringFromRow(r: ScoringRow): QuestionScoring {
+  return {
+    id: r.id, partId: r.part_id, type: r.type,
+    points: r.points, correctOptionIndex: r.correct_option_index,
+  };
+}
 
 // Всё, что нужно для подсчёта статусов/прогресса одного ученика по набору
 // частей. Раньше эти данные грузились по одной части (N+1: для книги из 30
 // частей — ~90 последовательных запросов). Здесь — три пакетных запроса
 // на любой набор частей: вопросы, попытки ученика, ответы.
 export interface PartData {
-  questionsByPart: Map<string, Question[]>;
+  questionsByPart: Map<string, QuestionScoring[]>;
   answersByPart: Map<string, Answer[]>;
 }
 
@@ -29,7 +48,7 @@ export async function loadPartData(
   studentId: string,
   partIds: string[],
 ): Promise<PartData> {
-  const questionsByPart = new Map<string, Question[]>();
+  const questionsByPart = new Map<string, QuestionScoring[]>();
   const answersByPart = new Map<string, Answer[]>();
   if (partIds.length === 0) return { questionsByPart, answersByPart };
 
@@ -41,13 +60,13 @@ export async function loadPartData(
     { data: qrows, error: qerr },
     { data: attempts, error: aerr },
   ] = await Promise.all([
-    db.from("questions").select("*").in("part_id", partIds),
+    db.from("questions").select(SCORING_COLUMNS).in("part_id", partIds),
     db.from("attempts").select("id, part_id")
       .eq("student_id", studentId).in("part_id", partIds),
   ]);
   if (qerr) throw qerr;
-  for (const r of (qrows ?? []) as QuestionRow[]) {
-    const q = questionFromRow(r);
+  for (const r of (qrows ?? []) as ScoringRow[]) {
+    const q = scoringFromRow(r);
     const arr = questionsByPart.get(q.partId);
     if (arr) arr.push(q);
     else questionsByPart.set(q.partId, [q]);
@@ -84,7 +103,7 @@ export function statusFor(partId: string, data: PartData): PartStatus {
 
 // Баллы за пройденную часть: открытые — выставленные учителем,
 // тестовые — points за верный вариант.
-function partScore(questions: Question[], answers: Answer[]): number {
+function partScore(questions: QuestionScoring[], answers: Answer[]): number {
   return answers.reduce((sum, a) => {
     const q = questions.find((qq) => qq.id === a.questionId);
     if (!q) return sum;

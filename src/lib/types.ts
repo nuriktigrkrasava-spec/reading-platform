@@ -29,14 +29,21 @@ export interface Part {
   readingText: string;
 }
 
-export interface Question {
+// Подсчёт статуса части и баллов не нуждается в тексте вопроса и вариантах
+// ответа — только в типе, баллах и номере верного варианта. Экраны прогресса
+// грузят именно эти лёгкие поля: у книги на 30 частей вопросов под тысячу,
+// и тянуть их тексты с вариантами на каждый показ списка незачем.
+export interface QuestionScoring {
   id: string;
   partId: string;
   type: QuestionType;
-  text: string;
   points: number;
-  options: string[];
   correctOptionIndex: number | null;
+}
+
+export interface Question extends QuestionScoring {
+  text: string;
+  options: string[];
 }
 
 export interface Answer {

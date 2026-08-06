@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getStudentId } from "@/lib/auth/student";
 import { getStudent } from "@/lib/db/students";
-import { levelsWithProgress, partsWithStatus } from "@/lib/db/studentRepo";
+import { levelsWithProgress } from "@/lib/db/studentRepo";
 import LoadingScreen from "@/components/student/LoadingScreen";
 import { ChevronLeft, ChevronRight } from "@/components/student/icons";
 import styles from "../app.module.css";
@@ -16,15 +16,7 @@ export default async function ProgressPage() {
   if (!student) return <LoadingScreen />;
 
   const levels = await levelsWithProgress(studentId, student.startLevel);
-  const enrolled = levels.filter((l) => l.unlocked);
-
-  const rows = await Promise.all(
-    enrolled.map(async ({ book, progress }) => {
-      const parts = await partsWithStatus(studentId, book.id);
-      const pendingReview = parts.filter((p) => p.status === "pending_review").length;
-      return { book, progress, pendingReview };
-    }),
-  );
+  const rows = levels.filter((l) => l.unlocked);
 
   return (
     <div className={styles.shell}>

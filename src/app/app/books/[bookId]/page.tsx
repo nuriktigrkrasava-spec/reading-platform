@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { getStudentId } from "@/lib/auth/student";
 import { getStudent } from "@/lib/db/students";
-import {
-  partsWithStatus, isBookUnlockedForStudent, type PartWithStatus,
-} from "@/lib/db/studentRepo";
+import { bookView, type PartWithStatus } from "@/lib/db/studentRepo";
 import LoadingScreen from "@/components/student/LoadingScreen";
 import {
   ChevronLeft,
@@ -57,8 +55,8 @@ export default async function BookPartsPage({
   );
 
   // Прямая ссылка не должна обходить лестницу уровней.
-  const allowed = await isBookUnlockedForStudent(studentId, student.startLevel, bookId);
-  if (!allowed) {
+  const { unlocked, parts } = await bookView(studentId, student.startLevel, bookId);
+  if (!unlocked) {
     return (
       <div className={styles.shell}>
         {backLink}
@@ -69,8 +67,6 @@ export default async function BookPartsPage({
       </div>
     );
   }
-
-  const parts = await partsWithStatus(studentId, bookId);
 
   return (
     <div className={styles.shell}>
