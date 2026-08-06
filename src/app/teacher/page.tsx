@@ -16,7 +16,9 @@ function initials(name: string): string {
 
 export default async function OverviewPage() {
   const [rows, allBooks] = await Promise.all([overviewRows(), listBooks()]);
-  const activeEnrollments = rows.reduce((s, r) => s + r.books.length, 0);
+  const activeEnrollments = rows.reduce(
+    (s, r) => s + r.books.filter((b) => b.unlocked).length, 0,
+  );
 
   return (
     <>
@@ -55,7 +57,7 @@ export default async function OverviewPage() {
                 <div>
                   <div className={styles.studentName}>{student.name}</div>
                   <div className={styles.studentMeta}>
-                    {`${levelLabel(unlockedThrough)} · ${books.length} кітап қолжетімді`}
+                    {`${levelLabel(unlockedThrough)} · ${books.filter((b) => b.unlocked).length} кітап қолжетімді`}
                   </div>
                 </div>
               </div>
@@ -64,12 +66,13 @@ export default async function OverviewPage() {
                 <p className={styles.noBooks}>Әзірге қолжетімді кітап жоқ.</p>
               ) : (
                 <div className={styles.books}>
-                  {books.map(({ book, progress: p }) => (
+                  {books.map(({ book, progress: p, unlocked }) => (
                     <div key={book.id} className={styles.bookRow}>
                       <Link
                         href={`/teacher/books/${book.id}`}
                         className={styles.bookTitle}
                       >
+                        {unlocked ? "" : "🔒 "}
                         {levelLabel(book.level)} · {book.title}
                       </Link>
                       <div className={styles.progressWrap}>

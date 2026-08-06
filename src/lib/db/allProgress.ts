@@ -11,7 +11,7 @@ import type { AnswerRow, PartRow, QuestionRow } from "@/lib/db/rowTypes";
 export interface OverviewRow {
   student: Student;
   unlockedThrough: number;
-  books: { book: Book; progress: BookProgress }[];
+  books: { book: Book; progress: BookProgress; unlocked: boolean }[];
 }
 
 function answerFromRow(r: AnswerRow): Answer {
@@ -121,7 +121,6 @@ export async function overviewRows(): Promise<OverviewRow[]> {
     const unlockedThrough = unlockedThroughLevel(levelBooks, student.startLevel, statusById);
 
     const rows = books
-      .filter((b) => isLevelUnlocked(b.level, unlockedThrough))
       .map((book) => {
         const bookParts = partsByBook.get(book.id) ?? [];
         const completed: { score: number }[] = [];
@@ -131,8 +130,17 @@ export async function overviewRows(): Promise<OverviewRow[]> {
             score: partScore(questionsByPart.get(p.id) ?? [], perPart.get(p.id) ?? []),
           });
         }
-        return { book, progress: computeBookProgress(bookParts.length, completed) };
-      });
+        return {
+          book,
+          progress: computeBookProgress(bookParts.length, completed),
+          unlocked: isLevelUnlocked(book.level, unlockedThrough),
+        };
+      })
+      // Учителю показываем открытые книги и те, где у ученика уже есть
+      // пройденные части. Иначе после сброса стартового уровня прогресс,
+      // накопленный на верхних уровнях, исчез бы у него с глаз — хотя
+      // в базе он цел и вернётся к ученику, когда тот дойдёт до уровня.
+      .filter((r) => r.unlocked || r.progress.completedParts > 0);
 
     return { student, unlockedThrough, books: rows };
   });
