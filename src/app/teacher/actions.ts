@@ -34,9 +34,9 @@ export async function createBookAction(formData: FormData) {
   await books.createBook({
     title: String(formData.get("title") ?? ""),
     description: String(formData.get("description") ?? ""),
-    level: parseLevel(formData.get("level")),
   });
   revalidatePath("/teacher/books");
+  revalidatePath("/app");
 }
 
 export async function updateBookAction(formData: FormData) {
@@ -45,10 +45,26 @@ export async function updateBookAction(formData: FormData) {
   await books.updateBook(bookId, {
     title: String(formData.get("title") ?? ""),
     description: String(formData.get("description") ?? ""),
-    level: parseLevel(formData.get("level")),
   });
   revalidatePath("/teacher/books");
   revalidatePath(`/teacher/books/${bookId}`);
+}
+
+export async function setBookLevelAction(formData: FormData) {
+  await requireAuth();
+  const bookId = String(formData.get("bookId"));
+  await books.setBookLevel(bookId, parseLevel(formData.get("level")));
+  revalidatePath("/teacher/books");
+  revalidatePath(`/teacher/books/${bookId}`);
+  revalidatePath("/app");
+}
+
+export async function moveBookLevelAction(formData: FormData) {
+  await requireAuth();
+  const direction = formData.get("direction") === "up" ? "up" : "down";
+  await books.moveBookLevel(String(formData.get("bookId")), direction);
+  revalidatePath("/teacher/books");
+  revalidatePath("/app");
 }
 
 export async function deleteBookAction(formData: FormData) {

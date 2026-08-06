@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { listBooks } from "@/lib/db/books";
 import { listParts } from "@/lib/db/parts";
-import { createPartAction, updateBookAction } from "@/app/teacher/actions";
+import { createPartAction, setBookLevelAction } from "@/app/teacher/actions";
 import PageHeader from "@/components/teacher/PageHeader";
 import SubmitButton from "@/components/teacher/SubmitButton";
 import PartItem from "@/components/teacher/PartItem";
@@ -55,25 +55,29 @@ export default async function BookPage({
             <h2 className={styles.formTitle}>Кітап деңгейі</h2>
             <p className={styles.formHint}>
               Деңгей — бұл бір кітап. Оқушы алдыңғы деңгейді бітіргенде осы
-              деңгей ашылады.
+              деңгей ашылады. Деңгейді таңдаған кітап екеуі орындарын
+              ауыстырады.
             </p>
-            <form action={updateBookAction} className={styles.form}>
+            <form action={setBookLevelAction} className={styles.form}>
               <input type="hidden" name="bookId" value={book.id} />
-              <input type="hidden" name="title" value={book.title} />
-              <input type="hidden" name="description" value={book.description} />
               <div>
                 <label htmlFor="level" className="t-label">
                   Деңгей
                 </label>
-                <input
+                <select
                   id="level"
                   name="level"
-                  type="number"
-                  min={1}
-                  defaultValue={book.level}
                   required
-                  className="t-input"
-                />
+                  className="t-select"
+                  defaultValue={book.level}
+                >
+                  {books.map((b) => (
+                    <option key={b.id} value={b.level}>
+                      {levelLabel(b.level)}
+                      {b.id === book.id ? "" : ` · ${b.title}`}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <SubmitButton
