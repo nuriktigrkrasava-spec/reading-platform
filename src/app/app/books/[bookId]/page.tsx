@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { getStudentId } from "@/lib/auth/student";
-import { partsWithStatus, type PartWithStatus } from "@/lib/db/studentRepo";
+import { getStudent } from "@/lib/db/students";
+import {
+  partsWithStatus, isBookUnlockedForStudent, type PartWithStatus,
+} from "@/lib/db/studentRepo";
 import LoadingScreen from "@/components/student/LoadingScreen";
 import {
   ChevronLeft,
@@ -43,14 +46,35 @@ export default async function BookPartsPage({
   const studentId = await getStudentId();
   if (!studentId) return <LoadingScreen />;
 
+  const student = await getStudent(studentId);
+  if (!student) return <LoadingScreen />;
+
+  const backLink = (
+    <Link href="/app" className={styles.back}>
+      <ChevronLeft />
+      Барлық деңгейлер
+    </Link>
+  );
+
+  // Прямая ссылка не должна обходить лестницу уровней.
+  const allowed = await isBookUnlockedForStudent(studentId, student.startLevel, bookId);
+  if (!allowed) {
+    return (
+      <div className={styles.shell}>
+        {backLink}
+        <div className={styles.notice}>
+          <span className={styles.noticeIcon}>🔒</span>
+          Бұл деңгей әзірге жабық
+        </div>
+      </div>
+    );
+  }
+
   const parts = await partsWithStatus(studentId, bookId);
 
   return (
     <div className={styles.shell}>
-      <Link href="/app" className={styles.back}>
-        <ChevronLeft />
-        Барлық кітаптар
-      </Link>
+      {backLink}
 
       <header className={styles.header}>
         <span className={styles.eyebrow}>Мазмұны</span>

@@ -1,6 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase/client";
 import { listQuestions } from "@/lib/db/questions";
-import { partsWithStatus } from "@/lib/db/studentRepo";
+import { partsWithStatus, isBookUnlockedForStudent } from "@/lib/db/studentRepo";
 
 export interface SubmittedAnswer {
   questionId: string;
@@ -13,20 +13,20 @@ export async function submitPart(
 ): Promise<void> {
   const db = createServerSupabase();
 
-  // 1. Найти part и уровень его книги. Нет такого part — no-op.
+  // 1. Найти книгу этой части. Нет такого part — no-op.
   const { data: partRow, error: perr } = await db.from("parts")
-    .select("book_id, books!inner(level)").eq("id", partId).maybeSingle();
+    .select("book_id").eq("id", partId).maybeSingle();
   if (perr) throw perr;
   if (!partRow) return;
   const bookId = partRow.book_id as string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const bookLevel = (partRow as any).books?.level as number | undefined;
 
-  // 2. Уровень книги должен быть открыт ученику. Иначе — no-op.
+  // 2. Уровень книги должен быть открыт ученику — по той же лестнице, что и
+  // в интерфейсе: стартовый уровень плюс пройденные целиком уровни выше.
   const { data: studentRow, error: serr } = await db.from("students")
     .select("start_level").eq("id", studentId).maybeSingle();
   if (serr) throw serr;
-  if (!studentRow || bookLevel == null || bookLevel > studentRow.start_level) return;
+  if (!studentRow) return;
+  if (!(await isBookUnlockedForStudent(studentId, studentRow.start_level, bookId))) return;
 
   // 3. Part должна быть разблокирована для этого студента. Иначе — no-op.
   const statuses = await partsWithStatus(studentId, bookId);

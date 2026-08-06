@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { getStudentId } from "@/lib/auth/student";
 import { getStudent } from "@/lib/db/students";
-import { booksUpToLevel } from "@/lib/db/studentRepo";
+import { levelsWithProgress } from "@/lib/db/studentRepo";
 import { levelLabel } from "@/lib/options";
 import LoadingScreen from "@/components/student/LoadingScreen";
-import { ChevronRight } from "@/components/student/icons";
+import { ChevronRight, LockIcon } from "@/components/student/icons";
 import styles from "./app.module.css";
 
 export const dynamic = "force-dynamic";
@@ -16,48 +16,67 @@ export default async function StudentHomePage() {
   const student = await getStudent(studentId);
   if (!student) return <LoadingScreen />;
 
-  const enrolled = await booksUpToLevel(studentId, student.startLevel);
+  const levels = await levelsWithProgress(studentId, student.startLevel);
 
   return (
     <div className={styles.shell}>
       <header className={styles.header}>
-        <span className={styles.eyebrow}>{levelLabel(student.startLevel)} · менің кітаптарым</span>
+        <span className={styles.eyebrow}>менің деңгейлерім</span>
         <h1 className={styles.title}>Оқу сауаттылығы</h1>
-        <p className={styles.subtitle}>Тоқтаған жеріңізден жалғастырыңыз</p>
+        <p className={styles.subtitle}>Деңгейді бітіріңіз — келесісі ашылады</p>
       </header>
 
-      {enrolled.length === 0 ? (
+      {levels.length === 0 ? (
         <div className={styles.notice}>
           <span className={styles.noticeIcon}>📚</span>
-          {levelLabel(student.startLevel)} үшін әзірге кітап жоқ. Кейінірек қараңыз
+          Әзірге кітап жоқ. Кейінірек қараңыз
         </div>
       ) : (
         <div className={styles.cardList}>
-          {enrolled.map(({ book, progress }) => (
-            <Link key={book.id} href={`/app/books/${book.id}`} className={styles.bookCard}>
-              <div className={styles.bookTop}>
-                <div>
-                  <div className={styles.bookTitle}>{book.title}</div>
-                  {book.description ? (
-                    <div className={styles.bookDesc}>{book.description}</div>
-                  ) : null}
+          {levels.map(({ book, progress, unlocked }) => {
+            const inner = (
+              <>
+                <div className={styles.bookTop}>
+                  <div>
+                    <div className={styles.levelBadge}>{levelLabel(book.level)}</div>
+                    <div className={styles.bookTitle}>{book.title}</div>
+                    {book.description ? (
+                      <div className={styles.bookDesc}>{book.description}</div>
+                    ) : null}
+                  </div>
+                  {unlocked ? <ChevronRight className={styles.chevron} /> : <LockIcon />}
                 </div>
-                <ChevronRight className={styles.chevron} />
+                {unlocked ? (
+                  <div className={styles.progress}>
+                    <div className={styles.progressMeta}>
+                      <span>{progress.completedParts} бөлім аяқталды</span>
+                      <span className={styles.progressPercent}>{progress.percent}%</span>
+                    </div>
+                    <div className={styles.bar}>
+                      <div
+                        className={styles.barFill}
+                        style={{ width: `${progress.percent}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.lockedNote}>
+                    Алдыңғы деңгейді бітіргенде ашылады
+                  </div>
+                )}
+              </>
+            );
+
+            return unlocked ? (
+              <Link key={book.id} href={`/app/books/${book.id}`} className={styles.bookCard}>
+                {inner}
+              </Link>
+            ) : (
+              <div key={book.id} className={`${styles.bookCard} ${styles.bookCardLocked}`}>
+                {inner}
               </div>
-              <div className={styles.progress}>
-                <div className={styles.progressMeta}>
-                  <span>{progress.completedParts} бөлім аяқталды</span>
-                  <span className={styles.progressPercent}>{progress.percent}%</span>
-                </div>
-                <div className={styles.bar}>
-                  <div
-                    className={styles.barFill}
-                    style={{ width: `${progress.percent}%` }}
-                  />
-                </div>
-              </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       )}
 

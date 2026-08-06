@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getStudentId } from "@/lib/auth/student";
-import { partDetail } from "@/lib/db/studentRepo";
+import { getStudent } from "@/lib/db/students";
+import { partDetail, isBookUnlockedForStudent } from "@/lib/db/studentRepo";
 import { optionLetter } from "@/lib/options";
 import type { Answer, Question } from "@/lib/types";
 import LoadingScreen from "@/components/student/LoadingScreen";
@@ -79,7 +80,8 @@ export default async function PartPage({
   const studentId = await getStudentId();
   if (!studentId) return <LoadingScreen />;
 
-  const detail = await partDetail(studentId, bookId, partId);
+  const student = await getStudent(studentId);
+  if (!student) return <LoadingScreen />;
 
   const backLink = (
     <Link href={`/app/books/${bookId}`} className={styles.back}>
@@ -87,6 +89,22 @@ export default async function PartPage({
       Кітап бөлімдеріне
     </Link>
   );
+
+  // Прямая ссылка не должна обходить лестницу уровней.
+  const allowed = await isBookUnlockedForStudent(studentId, student.startLevel, bookId);
+  if (!allowed) {
+    return (
+      <div className={styles.shell}>
+        {backLink}
+        <div className={styles.notice}>
+          <span className={styles.noticeIcon}>🔒</span>
+          Бұл деңгей әзірге жабық
+        </div>
+      </div>
+    );
+  }
+
+  const detail = await partDetail(studentId, bookId, partId);
 
   if (!detail) {
     return (

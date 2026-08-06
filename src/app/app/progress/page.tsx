@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getStudentId } from "@/lib/auth/student";
 import { getStudent } from "@/lib/db/students";
-import { booksUpToLevel, partsWithStatus } from "@/lib/db/studentRepo";
+import { levelsWithProgress, partsWithStatus } from "@/lib/db/studentRepo";
 import LoadingScreen from "@/components/student/LoadingScreen";
 import { ChevronLeft, ChevronRight } from "@/components/student/icons";
 import styles from "../app.module.css";
@@ -15,7 +15,8 @@ export default async function ProgressPage() {
   const student = await getStudent(studentId);
   if (!student) return <LoadingScreen />;
 
-  const enrolled = await booksUpToLevel(studentId, student.startLevel);
+  const levels = await levelsWithProgress(studentId, student.startLevel);
+  const enrolled = levels.filter((l) => l.unlocked);
 
   const rows = await Promise.all(
     enrolled.map(async ({ book, progress }) => {
@@ -29,7 +30,7 @@ export default async function ProgressPage() {
     <div className={styles.shell}>
       <Link href="/app" className={styles.back}>
         <ChevronLeft />
-        Барлық кітаптар
+        Барлық деңгейлер
       </Link>
 
       <header className={styles.header}>
