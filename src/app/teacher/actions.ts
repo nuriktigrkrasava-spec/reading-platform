@@ -85,6 +85,22 @@ export async function createPartAction(formData: FormData) {
   revalidatePath(`/teacher/books/${bookId}`);
 }
 
+export async function createPartsAction(formData: FormData) {
+  await requireAuth();
+  const bookId = String(formData.get("bookId"));
+  const count = Number(formData.get("count") ?? 1);
+  await parts.createParts(bookId, Number.isFinite(count) ? count : 1);
+  revalidatePath(`/teacher/books/${bookId}`);
+}
+
+export async function movePartAction(formData: FormData) {
+  await requireAuth();
+  const bookId = String(formData.get("bookId"));
+  const direction = formData.get("direction") === "up" ? "up" : "down";
+  await parts.movePart(String(formData.get("partId")), bookId, direction);
+  revalidatePath(`/teacher/books/${bookId}`);
+}
+
 export async function updatePartAction(formData: FormData) {
   await requireAuth();
   const bookId = String(formData.get("bookId"));
