@@ -76,7 +76,7 @@ export default async function StudentsPage() {
                     >
                       {books.map((b) => (
                         <option key={b.id} value={b.level}>
-                          {levelLabel(b.level)}
+                          {levelLabel(b.level)} · {b.title}
                         </option>
                       ))}
                     </select>
@@ -87,6 +87,9 @@ export default async function StudentsPage() {
                       Сақтау
                     </SubmitButton>
                   </form>
+                  <p className={styles.emptyEnrolled}>
+                    Бастапқы деңгейден төмен деңгейлер де ашық болады.
+                  </p>
                 </div>
               </article>
             );
