@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getStudentId } from "@/lib/auth/student";
-import { getStudent } from "@/lib/db/students";
-import { levelsWithProgress } from "@/lib/db/studentRepo";
+import { loadLadder, levelsFrom } from "@/lib/db/studentRepo";
 import LoadingScreen from "@/components/student/LoadingScreen";
 import { ChevronLeft, ChevronRight } from "@/components/student/icons";
 import styles from "../app.module.css";
@@ -12,11 +11,10 @@ export default async function ProgressPage() {
   const studentId = await getStudentId();
   if (!studentId) return <LoadingScreen />;
 
-  const student = await getStudent(studentId);
-  if (!student) return <LoadingScreen />;
+  const ladder = await loadLadder(studentId);
+  if (!ladder) return <LoadingScreen />;
 
-  const levels = await levelsWithProgress(studentId, student.startLevel);
-  const rows = levels.filter((l) => l.unlocked);
+  const rows = levelsFrom(ladder).filter((l) => l.unlocked);
 
   return (
     <div className={styles.shell}>

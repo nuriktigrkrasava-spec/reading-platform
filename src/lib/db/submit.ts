@@ -22,13 +22,8 @@ export async function submitPart(
 
   // 2. Уровень книги должен быть открыт ученику — по той же лестнице, что и
   // в интерфейсе: стартовый уровень плюс пройденные целиком уровни выше.
-  const { data: studentRow, error: serr } = await db.from("students")
-    .select("start_level").eq("id", studentId).maybeSingle();
-  if (serr) throw serr;
-  if (!studentRow) return;
-
   // 3. И сама часть должна быть открыта. Обе проверки — из одной загрузки.
-  const { unlocked, parts } = await bookView(studentId, studentRow.start_level, bookId);
+  const { unlocked, parts } = await bookView(studentId, bookId);
   if (!unlocked) return;
   const entry = parts.find((p) => p.part.id === partId);
   if (!entry || !entry.unlocked) return;

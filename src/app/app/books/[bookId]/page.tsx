@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getStudentId } from "@/lib/auth/student";
-import { getStudent } from "@/lib/db/students";
-import { bookView, type PartWithStatus } from "@/lib/db/studentRepo";
+import { loadLadder, bookViewFrom, type PartWithStatus } from "@/lib/db/studentRepo";
 import LoadingScreen from "@/components/student/LoadingScreen";
 import {
   ChevronLeft,
@@ -44,8 +43,8 @@ export default async function BookPartsPage({
   const studentId = await getStudentId();
   if (!studentId) return <LoadingScreen />;
 
-  const student = await getStudent(studentId);
-  if (!student) return <LoadingScreen />;
+  const ladder = await loadLadder(studentId);
+  if (!ladder) return <LoadingScreen />;
 
   const backLink = (
     <Link href="/app" className={styles.back}>
@@ -55,7 +54,7 @@ export default async function BookPartsPage({
   );
 
   // Прямая ссылка не должна обходить лестницу уровней.
-  const { unlocked, parts } = await bookView(studentId, student.startLevel, bookId);
+  const { unlocked, parts } = bookViewFrom(ladder, bookId);
   if (!unlocked) {
     return (
       <div className={styles.shell}>

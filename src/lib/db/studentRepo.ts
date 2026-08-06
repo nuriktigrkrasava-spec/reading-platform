@@ -1,12 +1,14 @@
 import { createServerSupabase } from "@/lib/supabase/client";
 import { studentFromRow, partFromRow } from "@/lib/db/mappers";
-import { listParts } from "@/lib/db/parts";
+import { fetchAllRows } from "@/lib/db/paginate";
 import { listQuestions } from "@/lib/db/questions";
 import { listBooks } from "@/lib/db/books";
+import { getStudent } from "@/lib/db/students";
 import { unlockedPartIds } from "@/lib/progress/unlock";
 import { unlockedThroughLevel, isLevelUnlocked } from "@/lib/progress/levelUnlock";
 import {
-  loadPartData, statusFor, bookProgressFrom, type PartData,
+  partDataFrom, fetchScoringQuestions, fetchStudentAttempts,
+  statusFor, bookProgressFrom, type PartData,
 } from "@/lib/db/studentProgress";
 import type { Student, Book, Part, PartStatus, Question, Answer } from "@/lib/types";
 import type { BookProgress } from "@/lib/progress/bookProgress";
@@ -30,7 +32,8 @@ export interface LevelEntry {
   pendingReview: number; // частей, ждущих проверки учителем
 }
 
-interface Ladder {
+export interface Ladder {
+  student: Student;
   books: Book[];
   partsByBook: Map<string, Part[]>;
   data: PartData;
@@ -38,29 +41,30 @@ interface Ladder {
   unlockedThrough: number;
 }
 
-// Одна загрузка всего, что нужно экранам ученика: книги, их части, данные
-// прогресса и посчитанная граница открытых уровней. Три пакетных запроса
-// на страницу.
+// Одна загрузка всего, что нужно экранам ученика: сам ученик, книги, части,
+// данные прогресса и посчитанная граница открытых уровней.
 //
-// Раньше страница книги грузила это дважды: сначала чтобы проверить доступ
-// к уровню, потом заново ради статусов частей. Теперь загрузка одна, а
-// проверка доступа и список частей считаются из общего результата.
-async function loadLadder(studentId: string, startLevel: number): Promise<Ladder> {
-  const books = await listBooks();
-  const empty: Ladder = {
-    books, partsByBook: new Map(),
-    data: { questionsByPart: new Map(), answersByPart: new Map() },
-    statusById: new Map(), unlockedThrough: startLevel,
-  };
-  if (books.length === 0) return empty;
-
+// Пять последовательных запросов раньше стоили около пяти секунд на страницу:
+// база отвечает примерно за секунду на круг, и круги шли один за другим.
+// Теперь ученик, книги, части, вопросы и попытки уезжают одним параллельным
+// пакетом — ни один из них не нужен другому, — и остаётся дозапросить только
+// ответы, которым нужны id попыток. Два круга вместо пяти.
+export async function loadLadder(studentId: string): Promise<Ladder | null> {
   const db = createServerSupabase();
-  const { data: partRows, error } = await db.from("parts")
-    .select("*").in("book_id", books.map((b) => b.id)).order("order");
-  if (error) throw error;
-  const parts = ((partRows ?? []) as PartRow[]).map(partFromRow);
 
-  const data = await loadPartData(studentId, parts.map((p) => p.id));
+  const [student, books, partRows, questionRows, attempts] = await Promise.all([
+    getStudent(studentId),
+    listBooks(),
+    fetchAllRows<PartRow>((from, to) =>
+      db.from("parts").select("*").order("book_id").order("order").range(from, to),
+    ),
+    fetchScoringQuestions(),
+    fetchStudentAttempts(studentId),
+  ]);
+  if (!student) return null;
+
+  const data = await partDataFrom(questionRows, attempts);
+  const parts = partRows.map(partFromRow);
 
   const partsByBook = new Map<string, Part[]>();
   for (const p of parts) {
@@ -68,6 +72,7 @@ async function loadLadder(studentId: string, startLevel: number): Promise<Ladder
     if (arr) arr.push(p);
     else partsByBook.set(p.bookId, [p]);
   }
+  for (const arr of partsByBook.values()) arr.sort((a, b) => a.order - b.order);
 
   const statusById = new Map<string, PartStatus>();
   for (const p of parts) statusById.set(p.id, statusFor(p.id, data));
@@ -77,17 +82,14 @@ async function loadLadder(studentId: string, startLevel: number): Promise<Ladder
       level: b.level,
       partIds: (partsByBook.get(b.id) ?? []).map((p) => p.id),
     })),
-    startLevel,
+    student.startLevel,
     statusById,
   );
 
-  return { books, partsByBook, data, statusById, unlockedThrough };
+  return { student, books, partsByBook, data, statusById, unlockedThrough };
 }
 
-export async function levelsWithProgress(
-  studentId: string, startLevel: number,
-): Promise<LevelEntry[]> {
-  const l = await loadLadder(studentId, startLevel);
+export function levelsFrom(l: Ladder): LevelEntry[] {
   return l.books.map((book) => {
     const parts = l.partsByBook.get(book.id) ?? [];
     return {
@@ -103,17 +105,22 @@ export async function levelsWithProgress(
 
 export interface BookView { unlocked: boolean; parts: PartWithStatus[]; }
 
-// Доступ к книге и статусы её частей за одну загрузку.
-export async function bookView(
-  studentId: string, startLevel: number, bookId: string,
-): Promise<BookView> {
-  const l = await loadLadder(studentId, startLevel);
+// Доступ к книге и статусы её частей из уже загруженной лестницы.
+export function bookViewFrom(l: Ladder, bookId: string): BookView {
   const book = l.books.find((b) => b.id === bookId);
   if (!book) return { unlocked: false, parts: [] };
   return {
     unlocked: isLevelUnlocked(book.level, l.unlockedThrough),
     parts: withStatuses(l.partsByBook.get(bookId) ?? [], l.data),
   };
+}
+
+export async function bookView(
+  studentId: string, bookId: string,
+): Promise<BookView> {
+  const l = await loadLadder(studentId);
+  if (!l) return { unlocked: false, parts: [] };
+  return bookViewFrom(l, bookId);
 }
 
 export interface PartWithStatus { part: Part; status: PartStatus; unlocked: boolean; }
@@ -129,14 +136,6 @@ function withStatuses(parts: Part[], data: PartData): PartWithStatus[] {
   }));
 }
 
-export async function partsWithStatus(
-  studentId: string, bookId: string,
-): Promise<PartWithStatus[]> {
-  const parts = await listParts(bookId);
-  const data = await loadPartData(studentId, parts.map((p) => p.id));
-  return withStatuses(parts, data);
-}
-
 export interface PartDetail {
   part: Part; questions: Question[]; answers: Answer[]; status: PartStatus;
   unlocked: boolean; bookUnlocked: boolean;
@@ -146,9 +145,8 @@ export interface PartDetail {
 // Тексты и варианты грузятся только здесь и только для этой части — общая
 // загрузка прогресса тянет по вопросам лишь тип и баллы.
 export async function partDetail(
-  studentId: string, startLevel: number, bookId: string, partId: string,
+  l: Ladder, bookId: string, partId: string,
 ): Promise<PartDetail | null> {
-  const l = await loadLadder(studentId, startLevel);
   const book = l.books.find((b) => b.id === bookId);
   if (!book) return null;
 

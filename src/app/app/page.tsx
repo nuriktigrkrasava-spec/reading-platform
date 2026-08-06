@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getStudentId } from "@/lib/auth/student";
-import { getStudent } from "@/lib/db/students";
-import { levelsWithProgress } from "@/lib/db/studentRepo";
+import { loadLadder, levelsFrom } from "@/lib/db/studentRepo";
 import { levelLabel } from "@/lib/options";
 import LoadingScreen from "@/components/student/LoadingScreen";
 import { ChevronRight, LockIcon } from "@/components/student/icons";
@@ -13,10 +12,10 @@ export default async function StudentHomePage() {
   const studentId = await getStudentId();
   if (!studentId) return <LoadingScreen />;
 
-  const student = await getStudent(studentId);
-  if (!student) return <LoadingScreen />;
+  const ladder = await loadLadder(studentId);
+  if (!ladder) return <LoadingScreen />;
 
-  const levels = await levelsWithProgress(studentId, student.startLevel);
+  const levels = levelsFrom(ladder);
 
   return (
     <div className={styles.shell}>

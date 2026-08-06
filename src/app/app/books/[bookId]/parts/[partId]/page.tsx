@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getStudentId } from "@/lib/auth/student";
-import { getStudent } from "@/lib/db/students";
-import { partDetail } from "@/lib/db/studentRepo";
+import { loadLadder, partDetail } from "@/lib/db/studentRepo";
 import { optionLetter } from "@/lib/options";
 import type { Answer, Question } from "@/lib/types";
 import LoadingScreen from "@/components/student/LoadingScreen";
@@ -80,8 +79,8 @@ export default async function PartPage({
   const studentId = await getStudentId();
   if (!studentId) return <LoadingScreen />;
 
-  const student = await getStudent(studentId);
-  if (!student) return <LoadingScreen />;
+  const ladder = await loadLadder(studentId);
+  if (!ladder) return <LoadingScreen />;
 
   const backLink = (
     <Link href={`/app/books/${bookId}`} className={styles.back}>
@@ -90,7 +89,7 @@ export default async function PartPage({
     </Link>
   );
 
-  const detail = await partDetail(studentId, student.startLevel, bookId, partId);
+  const detail = await partDetail(ladder, bookId, partId);
 
   // Прямая ссылка не должна обходить лестницу уровней.
   if (detail && !detail.bookUnlocked) {
